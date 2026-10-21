@@ -1,0 +1,865 @@
+/* ==========================================================================
+   HE THONG QUAN LY & PHAN CONG TINH NGUYEN VIEN - TINH NGUYEN D2L TEAM
+   Phong cach: Nen trang tinh te + Diem nhan Xanh Duong Neon (Electric Blue)
+   Mau chu: Don gian, dam net, tuong phan cao, de doc
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --xanh_neon: #0077ff;
+    /* Xanh duong dien */
+    --xanh_neon_sang: #00d2ff;
+    /* Cyan Neon */
+    --xanh_neon_phat_sang: rgba(0, 119, 255, 0.35);
+    --nen_trang: #ffffff;
+    --nen_phu: #f8fafc;
+    --chu_dam: #0f172a;
+    /* Chu tieu de den dam */
+    --chu_vua: #334155;
+    /* Chu noi dung xam dam */
+    --chu_nhe: #64748b;
+    /* Chu phu */
+    --vien_nhe: #e2e8f0;
+    --huy_hieu_con: #059669;
+    --huy_hieu_du: #dc2626;
+}
+
+/* 1. NEN VA KHUNG CHINH */
+body {
+    background-color: var(--nen_trang) !important;
+    background-image:
+        radial-gradient(circle at 5% 5%, rgba(0, 210, 255, 0.08) 0%, transparent 30%),
+        radial-gradient(circle at 95% 95%, rgba(0, 119, 255, 0.06) 0%, transparent 30%) !important;
+    color: var(--chu_vua) !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    min-height: 100vh;
+}
+
+main {
+    max-width: 1300px !important;
+    padding-inline: 30px !important;
+    margin-top: 25px;
+}
+
+/* 2. HEADER, BRAND & NAVBAR SANG BEN TRAI */
+.site-header {
+    background: #ffffff !important;
+    border-bottom: 2px solid var(--xanh_neon_sang) !important;
+    box-shadow: 0 4px 15px rgba(0, 119, 255, 0.1) !important;
+    padding: 10px 0 !important;
+}
+
+.header-inner {
+    max-width: 100% !important;
+    padding-inline: 30px !important;
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start !important;
+    gap: 30px !important;
+}
+
+.brand-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand {
+    color: var(--xanh_neon) !important;
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(0, 119, 255, 0.25);
+}
+
+.brand-group p {
+    margin: 2px 0 0 !important;
+    font-size: 0.85rem !important;
+    color: var(--chu_nhe) !important;
+}
+
+.main-nav {
+    display: flex !important;
+    align-items: center;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.main-nav a {
+    color: var(--chu_dam) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    border: 1px solid transparent !important;
+    transition: all 0.2s ease !important;
+    background: var(--nen_phu) !important;
+    text-decoration: none !important;
+}
+
+.main-nav a:hover,
+body:has(.page-search) .main-nav a[href="/"],
+body:has(.registration-form) .main-nav a[href="/register.php"] {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, var(--xanh_neon), var(--xanh_neon_sang)) !important;
+    box-shadow: 0 0 12px var(--xanh_neon_phat_sang) !important;
+}
+
+/* Cum nut tai khoan o goc phai Header */
+.nhom_tai_khoan {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.nut_dang_nhap {
+    color: var(--xanh_neon) !important;
+    border: 1.5px solid var(--xanh_neon) !important;
+    padding: 7px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    text-decoration: none !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.nut_dang_nhap:hover {
+    background: rgba(0, 119, 255, 0.08) !important;
+}
+
+.nut_dang_ky_tk {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, var(--xanh_neon), var(--xanh_neon_sang)) !important;
+    padding: 8px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    text-decoration: none !important;
+    box-shadow: 0 3px 10px var(--xanh_neon_phat_sang) !important;
+    transition: all 0.2s ease !important;
+}
+
+.nut_dang_ky_tk:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 119, 255, 0.4) !important;
+}
+
+/* 3. TIEU DE TRANG */
+.page-heading h1 {
+    color: var(--chu_dam) !important;
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+}
+
+.page-heading p {
+    color: var(--chu_nhe) !important;
+    font-size: 1.05rem !important;
+}
+
+.result-count {
+    color: var(--chu_vua) !important;
+}
+
+/* 4. BO LOC TIM KIEM (FILTER BAR) */
+.volunteer-filter-bar {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(0, 119, 255, 0.35) !important;
+    border-radius: 12px !important;
+    padding: 22px !important;
+    box-shadow: 0 6px 20px rgba(0, 119, 255, 0.08) !important;
+    margin-bottom: 25px;
+}
+
+.filter-inputs {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+    .filter-inputs {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-field span {
+    font-weight: 600;
+    color: var(--chu_dam) !important;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.form-field input,
+.form-field select {
+    background: #ffffff !important;
+    color: var(--chu_dam) !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    border-color: var(--xanh_neon) !important;
+    box-shadow: 0 0 10px var(--xanh_neon_phat_sang) !important;
+}
+
+.form-field--checkbox,
+.o_danh_dau {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    cursor: pointer;
+    color: var(--chu_dam) !important;
+}
+
+.form-field--checkbox input,
+.o_danh_dau input {
+    accent-color: var(--xanh_neon);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Nut bam Neon */
+.btn-primary {
+    background: linear-gradient(135deg, var(--xanh_neon), var(--xanh_neon_sang)) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 11px 22px !important;
+    cursor: pointer;
+    box-shadow: 0 4px 14px var(--xanh_neon_phat_sang) !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 119, 255, 0.5) !important;
+}
+
+.btn-reset,
+.btn-cancel {
+    color: var(--xanh_neon) !important;
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: 15px;
+}
+
+/* 5. THE CHIEN DICH HOAT DONG */
+.event-card {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s ease !important;
+}
+
+.event-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--xanh_neon_sang) !important;
+    box-shadow: 0 8px 25px rgba(0, 119, 255, 0.2) !important;
+}
+
+.event-title {
+    color: var(--chu_dam) !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.event-date,
+.event-venue,
+.event-summary {
+    color: var(--chu_vua) !important;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+.event-category-tag {
+    display: inline-block;
+    color: var(--xanh_neon) !important;
+    background: rgba(0, 119, 255, 0.1);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.badge--open {
+    background: #ecfdf5 !important;
+    color: var(--huy_hieu_con) !important;
+    border: 1px solid #10b981 !important;
+}
+
+.badge--full {
+    background: #fef2f2 !important;
+    color: var(--huy_hieu_du) !important;
+    border: 1px solid #ef4444 !important;
+}
+
+/* Thanh Tien Do Tuyen TNV */
+.volunteer-progress {
+    background: #f1f5f9 !important;
+    border: 1px solid var(--vien_nhe);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 12px 0;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--chu_dam) !important;
+    margin-bottom: 4px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--xanh_neon), var(--xanh_neon_sang));
+    box-shadow: 0 0 8px var(--xanh_neon_phat_sang);
+}
+
+.btn-detail {
+    flex: 1;
+    text-align: center;
+    padding: 8px 12px;
+    border: 1.5px solid var(--xanh_neon) !important;
+    border-radius: 6px;
+    color: var(--xanh_neon) !important;
+    background: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-detail:hover {
+    background: rgba(0, 119, 255, 0.08);
+}
+
+.btn-register {
+    flex: 1.2;
+    text-align: center;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, var(--xanh_neon), var(--xanh_neon_sang)) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: 0 3px 10px var(--xanh_neon_phat_sang);
+    transition: all 0.2s;
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 119, 255, 0.5);
+}
+
+/* 6. THE DIEU DONG TNV (MISSION PASS - PREVIEW_OK) */
+.mission-pass {
+    background: #ffffff !important;
+    border: 2px solid var(--xanh_neon) !important;
+    border-radius: 14px !important;
+    padding: 25px !important;
+    box-shadow: 0 6px 25px var(--xanh_neon_phat_sang) !important;
+    margin-top: 25px;
+}
+
+.status-message {
+    color: var(--xanh_neon) !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    padding: 10px 0;
+    border-top: 1px dashed rgba(0, 119, 255, 0.4);
+    border-bottom: 1px dashed rgba(0, 119, 255, 0.4);
+    margin: 15px 0 !important;
+}
+
+.error-summary {
+    background: #fef2f2 !important;
+    border: 1px solid #ef4444 !important;
+    color: #991b1b !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+}
+
+/* 7. MAN HINH DANG NHAP VA DANG KY */
+.khung_xac_thuc {
+    max-width: 540px;
+    margin: 30px auto;
+}
+
+.the_tai_khoan {
+    background: #ffffff;
+    border: 1.5px solid rgba(0, 119, 255, 0.25);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 119, 255, 0.08);
+}
+
+.dau_the_tk {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.dau_the_tk h2 {
+    color: var(--chu_dam);
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.dau_the_tk p {
+    color: var(--chu_nhe);
+    font-size: 0.95rem;
+}
+
+.hang_doi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 600px) {
+    .hang_doi {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tuy_chon_phu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.quen_mk {
+    color: var(--xanh_neon);
+    text-decoration: underline;
+}
+
+.nut_toan_chieu {
+    width: 100%;
+    padding: 12px !important;
+    font-size: 1rem !important;
+}
+
+.chuyen_huong_tk {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 20px;
+    color: var(--chu_vua);
+}
+
+.chuyen_huong_tk a {
+    color: var(--xanh_neon);
+    font-weight: 700;
+}
+
+/* 8. BANG THONG BAO DANG KY THANH CONG TO O CHINH GIUA */
+.khung_thanh_cong_to {
+    max-width: 660px;
+    margin: 40px auto 60px;
+    display: flex;
+    justify-content: center;
+}
+
+.the_thong_bao_to {
+    background: #ffffff;
+    border: 2px solid var(--xanh_neon);
+    border-radius: 20px;
+    padding: 45px 35px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 119, 255, 0.15), 0 0 20px rgba(0, 210, 255, 0.2);
+    width: 100%;
+}
+
+.bieu_tuong_chuc_mung {
+    font-size: 3.5rem;
+    margin-bottom: 12px;
+}
+
+.nhan_xac_nhan_tnv {
+    display: inline-block;
+    background: rgba(0, 119, 255, 0.1);
+    color: var(--xanh_neon);
+    border: 1px solid var(--xanh_neon);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.the_thong_bao_to h2 {
+    color: var(--chu_dam);
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.loi_chuc_mung {
+    font-size: 1.05rem;
+    color: var(--chu_vua);
+    line-height: 1.6;
+    margin-bottom: 22px;
+}
+
+.hop_thong_tin_nhanh {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-bottom: 25px;
+    font-size: 0.95rem;
+    color: var(--chu_dam);
+}
+
+.cum_nut_hanh_dong {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.nut_to_ro {
+    padding: 12px 26px !important;
+    font-size: 1rem !important;
+    border-radius: 10px !important;
+}
+
+@media (max-width: 600px) {
+    .cum_nut_hanh_dong {
+        flex-direction: column;
+    }
+}
+
+/* ========================================================
+   BANNER HERO & KHU VUC TONG QUAN TEAM
+   ======================================================== */
+.banner_hero_slider {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    height: 520px;
+    position: relative;
+    overflow: hidden;
+    margin-top: -25px;
+    margin-bottom: 35px;
+    background: #080f23;
+}
+
+.slide_banner {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+}
+
+.slide_banner.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Banner Logo toan man hinh dong bo kich thuoc voi banner chien dich */
+.slide_logo_toan_man {
+    background-color: #ffffff;
+    background-size: cover;
+    background-position: center center;
+}
+
+.lop_link_toan_slide {
+    position: absolute;
+    inset: 0;
+    display: block;
+    z-index: 2;
+    cursor: pointer;
+}
+
+.sr_only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Lop phu gradient cho Slide 2 & 3 */
+.lop_phu_slide {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(8, 15, 35, 0.88) 0%, rgba(8, 15, 35, 0.65) 50%, rgba(0, 0, 0, 0.15) 100%);
+    display: flex;
+    align-items: center;
+    padding-left: 8%;
+    padding-right: 8%;
+}
+
+.noi_dung_slide {
+    max-width: 660px;
+    color: #ffffff;
+}
+
+.huy_hieu_slide {
+    display: inline-block;
+    background: rgba(0, 119, 255, 0.2);
+    color: var(--xanh_neon_sang);
+    border: 1.5px solid var(--xanh_neon_sang);
+    padding: 5px 16px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(8px);
+}
+
+.huy_hieu_mint {
+    background: rgba(0, 245, 212, 0.2);
+    color: #00f5d4;
+    border-color: #00f5d4;
+}
+
+.tieu_de_slide {
+    color: #ffffff !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 15px;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+}
+
+.mo_ta_slide {
+    color: #e2e8f0 !important;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.cum_nut_slide {
+    display: flex;
+    gap: 15px;
+}
+
+.nut_cta_trang {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+.nut_cta_trang:hover {
+    background: #ffffff !important;
+    color: var(--chu_dam) !important;
+}
+
+/* Nut mui ten trai / phai */
+.nut_chuyen_trai,
+.nut_chuyen_phai {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(15, 23, 42, 0.65);
+    color: #ffffff;
+    border: 1.5px solid rgba(0, 240, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
+    z-index: 10;
+}
+
+.nut_chuyen_trai { left: 25px; }
+.nut_chuyen_phai { right: 25px; }
+
+.nut_chuyen_trai:hover,
+.nut_chuyen_phai:hover {
+    background: var(--xanh_neon);
+    color: #ffffff;
+    box-shadow: 0 0 15px var(--xanh_neon);
+    transform: translateY(-50%) scale(1.08);
+}
+
+/* Cham tron dieu khien */
+.cac_cham_dieu_khien {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.cham_chuyen_slide {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cham_chuyen_slide.active {
+    width: 32px;
+    border-radius: 10px;
+    background: var(--xanh_neon_sang);
+    box-shadow: 0 0 10px var(--xanh_neon_sang);
+}
+
+/* Bang thong ke nhanh */
+.bang_thong_ke_nhanh {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px 30px;
+    margin-bottom: 45px;
+    box-shadow: 0 10px 30px rgba(0, 119, 255, 0.08);
+}
+
+.luoi_thong_ke {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    text-align: center;
+}
+
+.the_so_lieu strong {
+    color: var(--xanh_neon);
+    font-size: 2rem;
+    font-weight: 800;
+    display: block;
+}
+
+.the_so_lieu span {
+    color: var(--chu_nhe);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* 3 TRU COT HOAT DONG */
+.khu_vuc_tru_cot {
+    margin-bottom: 50px;
+}
+
+.tieu_de_phan_doan {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.tieu_de_phan_doan h2 {
+    color: var(--chu_dam);
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.tieu_de_phan_doan p {
+    color: var(--chu_nhe);
+    font-size: 1rem;
+}
+
+.luoi_tru_cot {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.the_tru_cot {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.the_tru_cot:hover {
+    transform: translateY(-5px);
+    border-color: var(--xanh_neon_sang);
+    box-shadow: 0 10px 25px rgba(0, 119, 255, 0.12);
+}
+
+.icon_tru_cot {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.the_tru_cot h3 {
+    color: var(--chu_dam);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.the_tru_cot p {
+    color: var(--chu_vua);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+    .slide_logo_chuan {
+        background-position: center bottom !important;
+        background-size: 70% auto !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner_hero_slider { height: 460px; }
+    .tieu_de_slide { font-size: 1.7rem; }
+    .cum_nut_slide { flex-direction: column; }
+    .nut_chuyen_trai, .nut_chuyen_phai { display: none; }
+    .luoi_thong_ke { grid-template-columns: repeat(2, 1fr); }
+    .luoi_tru_cot { grid-template-columns: 1fr; }
+}
