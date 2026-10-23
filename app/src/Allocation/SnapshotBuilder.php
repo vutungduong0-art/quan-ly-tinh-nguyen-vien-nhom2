@@ -51,6 +51,11 @@ final class SnapshotBuilder
             "SELECT a.shift_id, s.start_at, s.end_at FROM assignments a JOIN shifts s ON s.id = a.shift_id
              WHERE a.volunteer_id = ? AND s.event_id <> ? AND a.status IN ('assigned','confirmed') ORDER BY s.start_at, a.id"
         );
+        $absenceQuery = $this->db->prepare(
+            "SELECT a.shift_id FROM assignments a JOIN shifts s ON s.id = a.shift_id
+             WHERE a.volunteer_id = ? AND s.event_id = ? AND a.status IN ('absent','replaced')
+             ORDER BY a.shift_id"
+        );
         foreach ($volunteers as &$volunteer) {
             $id = (int) $volunteer['id'];
             $volunteer['id'] = $id;
@@ -64,6 +69,12 @@ final class SnapshotBuilder
             $busyQuery->bind_param('ii', $id, $eventId);
             $busyQuery->execute();
             $volunteer['busy_assignments'] = $busyQuery->get_result()->fetch_all(MYSQLI_ASSOC);
+            $absenceQuery->bind_param('ii', $id, $eventId);
+            $absenceQuery->execute();
+            $volunteer['absent_shift_ids'] = array_map(
+                'intval',
+                array_column($absenceQuery->get_result()->fetch_all(MYSQLI_ASSOC), 'shift_id')
+            );
             $volunteer['registrations'] = [['event_id' => $eventId, 'status' => 'registered', 'registered_at' => $volunteer['registered_at']]];
             unset($volunteer['registered_at']);
         }

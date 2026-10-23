@@ -50,6 +50,15 @@ integrationTest('Đủ các bảng nghiệp vụ toàn dự án', function () us
     }
 });
 
+integrationTest('Migration workflow có trạng thái xử lý và dấu vết đối chứng', function () use ($db): void {
+    $replacementColumns = $db->query("SHOW COLUMNS FROM replacement_requests LIKE 'resolution_note'")->fetch_assoc();
+    $comparisonColumn = $db->query("SHOW COLUMNS FROM allocation_runs LIKE 'comparison_group'")->fetch_assoc();
+    $versionColumn = $db->query("SHOW COLUMNS FROM allocation_runs LIKE 'project_version'")->fetch_assoc();
+    integrationAssert((bool) $replacementColumns, 'Thiếu resolution_note cho yêu cầu thay người');
+    integrationAssert((bool) $comparisonColumn, 'Thiếu comparison_group cho chạy đối chứng');
+    integrationAssert((bool) $versionColumn, 'Thiếu project_version cho khả năng tái lập');
+});
+
 integrationTest('Dữ liệu chuẩn có 30 tình nguyện viên và 5 kỹ năng', function () use ($db): void {
     $volunteers = (int) $db->query("SELECT COUNT(*) AS total FROM users WHERE role = 'volunteer'")->fetch_assoc()['total'];
     $profiles = (int) $db->query('SELECT COUNT(*) AS total FROM volunteer_profiles')->fetch_assoc()['total'];
@@ -198,6 +207,15 @@ integrationTest('Tổng hợp báo cáo không nhân bản số vị trí do JOI
     integrationAssert($rows !== [], 'Báo cáo rỗng');
     foreach ($rows as $row) {
         integrationAssert((int) $row['required_positions'] >= (int) $row['assigned_positions'], 'Số phân công vượt số vị trí cần trong báo cáo');
+    }
+});
+
+integrationTest('Báo cáo chi tiết trả đúng một dòng cho mỗi ca', function () use ($db): void {
+    $expected = (int) $db->query('SELECT COUNT(*) AS total FROM shifts')->fetch_assoc()['total'];
+    $rows = (new ReportRepository($db))->shiftSummary();
+    integrationAssert(count($rows) === $expected, 'Báo cáo theo ca bị thiếu hoặc nhân bản dòng');
+    foreach ($rows as $row) {
+        integrationAssert((int) $row['missing_count'] >= 0, 'Số vị trí thiếu không được âm');
     }
 });
 

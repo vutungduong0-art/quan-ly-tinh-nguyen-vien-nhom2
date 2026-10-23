@@ -11,56 +11,31 @@ final class AllocationRepository
     public function generate(int $eventId, string $algorithm, int $actorId): int
     {
         $snapshot = (new SnapshotBuilder($this->db))->forEvent($eventId);
-        $checker = new EligibilityChecker();
-        $result = match ($algorithm) {
-            RegistrationOrderAllocator::NAME => (new RegistrationOrderAllocator($checker))->allocate($snapshot),
-            ScarcityBalancedAllocator::NAME => (new ScarcityBalancedAllocator($checker))->allocate($snapshot),
-            default => throw new DomainException('Thuật toán không được hỗ trợ.'),
-        };
-        if (!$result['validation']['valid']) {
-            throw new DomainException('Kết quả có vi phạm ràng buộc nên không được lưu.');
+        $result = $this->allocate($snapshot, $algorithm);
+        $this->db->begin_transaction();
+        try {
+            $runId = $this->persistRun($eventId, $snapshot, $result, $actorId, 'draft', null);
+            $this->db->commit();
+            return $runId;
+        } catch (Throwable $exception) {
+            $this->db->rollback();
+            throw $exception;
         }
-        $json = Snapshot::encode($snapshot);
-        $hash = hash('sha256', $json);
-        $revision = (int) $snapshot['dataset']['schedule_revision'];
-        $version = (string) $snapshot['dataset']['version'];
-        $timezone = (string) $snapshot['dataset']['timezone'];
-        $code = (string) $snapshot['dataset']['code'];
-        $configJson = json_encode($result['config'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        $metricsJson = json_encode($result['metrics'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        $unassignedJson = json_encode($result['unassigned_volunteers'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    }
+
+    public function generateComparison(int $eventId, int $actorId): array
+    {
+        $snapshot = (new SnapshotBuilder($this->db))->forEvent($eventId);
+        $baseline = $this->allocate($snapshot, RegistrationOrderAllocator::NAME);
+        $improved = $this->allocate($snapshot, ScarcityBalancedAllocator::NAME);
+        $group = bin2hex(random_bytes(12));
 
         $this->db->begin_transaction();
         try {
-            $dataset = $this->db->prepare(
-                "INSERT INTO dataset_versions (code, version, sha256, seed, timezone, snapshot_json, source)
-                 VALUES (?, ?, ?, NULL, ?, ?, 'live') ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)"
-            );
-            $dataset->bind_param('sssss', $code, $version, $hash, $timezone, $json);
-            $dataset->execute();
-            $datasetId = (int) $this->db->insert_id;
-            $run = $this->db->prepare(
-                "INSERT INTO allocation_runs
-                 (event_id, dataset_version_id, algorithm, algorithm_version, config_json, schedule_revision, status, metrics_json, unassigned_json, created_by)
-                 VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)"
-            );
-            $algorithmVersion = (string) $result['algorithm_version'];
-            $run->bind_param('iisssissi', $eventId, $datasetId, $algorithm, $algorithmVersion, $configJson, $revision, $metricsJson, $unassignedJson, $actorId);
-            $run->execute();
-            $runId = (int) $this->db->insert_id;
-            $assignment = $this->db->prepare(
-                'INSERT INTO run_assignments (run_id, shift_id, volunteer_id, is_fixed, reason) VALUES (?, ?, ?, ?, NULL)'
-            );
-            foreach ($result['assignments'] as $item) {
-                $shiftId = (int) $item['shift_id'];
-                $volunteerId = (int) $item['volunteer_id'];
-                $isFixed = !empty($item['fixed']) ? 1 : 0;
-                $assignment->bind_param('iiii', $runId, $shiftId, $volunteerId, $isFixed);
-                $assignment->execute();
-            }
-            $this->audit($actorId, 'allocation.generated', 'allocation_run', $runId, null, ['algorithm' => $algorithm, 'snapshot_sha256' => $hash]);
+            $baselineId = $this->persistRun($eventId, $snapshot, $baseline, $actorId, 'experiment', $group);
+            $improvedId = $this->persistRun($eventId, $snapshot, $improved, $actorId, 'experiment', $group);
             $this->db->commit();
-            return $runId;
+            return ['comparison_group' => $group, 'baseline_run_id' => $baselineId, 'improved_run_id' => $improvedId];
         } catch (Throwable $exception) {
             $this->db->rollback();
             throw $exception;
@@ -130,9 +105,12 @@ final class AllocationRepository
     public function runs(?int $eventId = null): array
     {
         $sql = "SELECT ar.id, ar.event_id, e.name AS event_name, ar.algorithm, ar.algorithm_version, ar.status,
+                       ar.comparison_group, ar.project_version, ar.config_json,
                        ar.metrics_json, ar.unassigned_json, ar.schedule_revision, ar.created_at, ar.published_at,
+                       dv.code AS dataset_code, dv.version AS dataset_version, dv.sha256 AS snapshot_sha256,
                        COUNT(ra.volunteer_id) AS assignment_count
                 FROM allocation_runs ar JOIN events e ON e.id = ar.event_id
+                JOIN dataset_versions dv ON dv.id = ar.dataset_version_id
                 LEFT JOIN run_assignments ra ON ra.run_id = ar.id";
         if ($eventId !== null) {
             $sql .= ' WHERE ar.event_id = ?';
@@ -147,6 +125,7 @@ final class AllocationRepository
         foreach ($rows as &$row) {
             $row['metrics'] = json_decode((string) $row['metrics_json'], true) ?: [];
             $row['unassigned'] = json_decode((string) $row['unassigned_json'], true) ?: [];
+            $row['config'] = json_decode((string) $row['config_json'], true) ?: [];
         }
         unset($row);
         return $rows;
@@ -161,6 +140,101 @@ final class AllocationRepository
         $statement->bind_param('i', $runId);
         $statement->execute();
         return $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    private function allocate(array $snapshot, string $algorithm): array
+    {
+        $checker = new EligibilityChecker();
+        $result = match ($algorithm) {
+            RegistrationOrderAllocator::NAME => (new RegistrationOrderAllocator($checker))->allocate($snapshot),
+            ScarcityBalancedAllocator::NAME => (new ScarcityBalancedAllocator($checker))->allocate($snapshot),
+            default => throw new DomainException('Thuật toán không được hỗ trợ.'),
+        };
+        if (!$result['validation']['valid']) {
+            throw new DomainException('Kết quả có vi phạm ràng buộc nên không được lưu.');
+        }
+        return $result;
+    }
+
+    private function persistRun(
+        int $eventId,
+        array $snapshot,
+        array $result,
+        int $actorId,
+        string $status,
+        ?string $comparisonGroup
+    ): int {
+        $json = Snapshot::encode($snapshot);
+        $hash = hash('sha256', $json);
+        $revision = (int) $snapshot['dataset']['schedule_revision'];
+        $version = (string) $snapshot['dataset']['version'];
+        $timezone = (string) $snapshot['dataset']['timezone'];
+        $code = (string) $snapshot['dataset']['code'];
+        $algorithm = (string) $result['algorithm'];
+        $algorithmVersion = (string) $result['algorithm_version'];
+        $projectVersion = $this->projectVersion();
+        $configJson = json_encode($result['config'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $metricsJson = json_encode($result['metrics'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $unassignedJson = json_encode($result['unassigned_volunteers'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        $dataset = $this->db->prepare(
+            "INSERT INTO dataset_versions (code, version, sha256, seed, timezone, snapshot_json, source)
+             VALUES (?, ?, ?, NULL, ?, ?, 'live') ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)"
+        );
+        $dataset->bind_param('sssss', $code, $version, $hash, $timezone, $json);
+        $dataset->execute();
+        $datasetId = (int) $this->db->insert_id;
+        $run = $this->db->prepare(
+            'INSERT INTO allocation_runs
+             (event_id, dataset_version_id, algorithm, algorithm_version, comparison_group, project_version,
+              config_json, schedule_revision, status, metrics_json, unassigned_json, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $run->bind_param(
+            'iisssssisssi',
+            $eventId,
+            $datasetId,
+            $algorithm,
+            $algorithmVersion,
+            $comparisonGroup,
+            $projectVersion,
+            $configJson,
+            $revision,
+            $status,
+            $metricsJson,
+            $unassignedJson,
+            $actorId
+        );
+        $run->execute();
+        $runId = (int) $this->db->insert_id;
+        $assignment = $this->db->prepare(
+            'INSERT INTO run_assignments (run_id, shift_id, volunteer_id, is_fixed, reason) VALUES (?, ?, ?, ?, NULL)'
+        );
+        foreach ($result['assignments'] as $item) {
+            $shiftId = (int) $item['shift_id'];
+            $volunteerId = (int) $item['volunteer_id'];
+            $isFixed = !empty($item['fixed']) ? 1 : 0;
+            $assignment->bind_param('iiii', $runId, $shiftId, $volunteerId, $isFixed);
+            $assignment->execute();
+        }
+        $this->audit($actorId, 'allocation.generated', 'allocation_run', $runId, null, [
+            'algorithm' => $algorithm,
+            'snapshot_sha256' => $hash,
+            'comparison_group' => $comparisonGroup,
+            'project_version' => $projectVersion,
+        ]);
+        return $runId;
+    }
+
+    private function projectVersion(): string
+    {
+        $override = getenv('APP_CODE_VERSION');
+        if (is_string($override) && trim($override) !== '') {
+            return substr(trim($override), 0, 80);
+        }
+        $path = dirname(__DIR__, 3) . '/VERSION';
+        $version = is_file($path) ? trim((string) file_get_contents($path)) : 'unknown';
+        return $version !== '' ? substr($version, 0, 80) : 'unknown';
     }
 
     private function audit(int $actorId, string $action, string $entityType, int $entityId, ?array $before, array $after): void

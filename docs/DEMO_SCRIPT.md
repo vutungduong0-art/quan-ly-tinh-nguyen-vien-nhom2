@@ -31,6 +31,16 @@ Mở <http://127.0.0.1:8106>. Terminal thứ hai có thể chạy `bash lab.sh c
 4. Chọn người phù hợp; hệ thống tạo phân công thay, đóng yêu cầu và giữ bản ghi cũ ở trạng thái `replaced` trong một giao dịch.
 5. Mở **Thống kê**, đối chiếu số cần/đã phân và tải CSV.
 
+6. Tạo thêm một yêu cầu vắng nhưng không có ứng viên phù hợp, chọn **Kết thúc chưa có người**; kiểm tra ca vẫn báo thiếu và yêu cầu xuất hiện trong lịch sử. Có thể chọn **Mở lại** để tiếp tục tìm người.
+
+## Tình huống 3 — đối chứng và lịch sử vận hành
+
+1. Trong **Phân công**, chọn **Chạy cặp đối chứng**. Hệ thống chạy hai thuật toán trên cùng snapshot thay vì chạy rời ở hai thời điểm.
+2. Mở **Thống kê**, chỉ ra cùng mã nhóm, cùng hash snapshot và phiên bản mã; so sánh tỷ lệ lấp và chênh tải.
+3. Xem bảng **Tình trạng từng ca** để chỉ ra ca đủ/thiếu, xác nhận và yêu cầu thay người; tải CSV tình trạng ca.
+4. Dùng **Chuyển** ở một phân công hiện tại để chuyển sang ứng viên khác. Nếu ứng viên thiếu kỹ năng, trùng lịch hoặc đã báo vắng ca đó, toàn bộ giao dịch bị từ chối.
+5. Mở **Kho hoạt động**, **Lịch sử phân công** và **Lịch sử xử lý** để trình bày dữ liệu đã kết thúc vẫn được giữ.
+
 ## Trình bày thuật toán
 
 Chạy `bash lab.sh compare`, nêu rõ cả sáu kết quả dùng đúng từng snapshot/hash. Baseline ưu tiên thứ tự đăng ký; cải tiến ưu tiên ca khan hiếm và cân bằng tải. Cả hai có 0 vi phạm; cải tiến giảm chênh tải xuống 1 nhưng là heuristic, không cam kết tối ưu toàn cục.

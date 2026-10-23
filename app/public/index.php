@@ -43,15 +43,33 @@ if ($fatalError === null && $page === 'export') {
         auth()->requireRole('coordinator');
         $type = is_string($_GET['type'] ?? null) ? $_GET['type'] : 'summary';
         $eventId = filter_input(INPUT_GET, 'event_id', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        $filename = $type === 'assignments' ? 'danh-sach-phan-cong.csv' : 'tong-hop-hoat-dong.csv';
+        $filename = match ($type) {
+            'assignments' => 'danh-sach-phan-cong.csv',
+            'shift_status' => 'tinh-trang-tung-ca.csv',
+            default => 'tong-hop-hoat-dong.csv',
+        };
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         $output = fopen('php://output', 'wb');
         fwrite($output, "\xEF\xBB\xBF");
         if ($type === 'assignments') {
-            fputcsv($output, ['Hoạt động', 'Ca', 'Tình nguyện viên', 'Bắt đầu UTC', 'Kết thúc UTC', 'Trạng thái'], ',', '"', '', "\r\n");
+            fputcsv($output, ['Hoạt động', 'Ca', 'Mã TNV', 'Tình nguyện viên', 'Điện thoại', 'Email', 'Kỹ năng ca', 'Bắt đầu (VN)', 'Kết thúc (VN)', 'Trạng thái'], ',', '"', '', "\r\n");
             foreach ((new AssignmentRepository(db()))->allActive($eventId ? (int) $eventId : null) as $row) {
-                fputcsv($output, array_map([CsvValue::class, 'safe'], [$row['event_name'], $row['shift_name'], $row['volunteer_name'], $row['start_at'], $row['end_at'], $row['status']]), ',', '"', '', "\r\n");
+                fputcsv($output, array_map([CsvValue::class, 'safe'], [
+                    $row['event_name'], $row['shift_name'], $row['volunteer_code'], $row['volunteer_name'],
+                    $row['phone'] ?? '', $row['email'] ?? '', $row['required_skills'] ?: 'Không yêu cầu',
+                    format_local_datetime($row['start_at']), format_local_datetime($row['end_at']), $row['status'],
+                ]), ',', '"', '', "\r\n");
+            }
+        } elseif ($type === 'shift_status') {
+            fputcsv($output, ['Hoạt động', 'Ca', 'Bắt đầu (VN)', 'Kết thúc (VN)', 'Kỹ năng', 'Cần', 'Đã xếp', 'Đã xác nhận', 'Còn thiếu', 'Yêu cầu thay mở', 'Không tìm được người thay'], ',', '"', '', "\r\n");
+            foreach ((new ReportRepository(db()))->shiftSummary($eventId ? (int) $eventId : null) as $row) {
+                fputcsv($output, array_map([CsvValue::class, 'safe'], [
+                    $row['event_name'], $row['shift_name'], format_local_datetime($row['start_at']),
+                    format_local_datetime($row['end_at']), $row['required_skills'] ?: 'Không yêu cầu',
+                    $row['required_count'], $row['assigned_count'], $row['confirmed_count'],
+                    $row['missing_count'], $row['open_replacements'], $row['unfilled_replacements'],
+                ]), ',', '"', '', "\r\n");
             }
         } else {
             fputcsv($output, ['Hoạt động', 'Số ca', 'Lượt đăng ký', 'Vị trí cần', 'Đã phân công', 'Đã xác nhận', 'Còn thiếu'], ',', '"', '', "\r\n");
@@ -80,9 +98,14 @@ $volunteers = [];
 $volunteerProfile = null;
 $assignments = [];
 $myShifts = [];
+$myShiftHistory = [];
 $runs = [];
 $reportRows = [];
+$shiftReportRows = [];
+$comparisonGroups = [];
 $replacementRequests = [];
+$replacementHistory = [];
+$assignmentHistory = [];
 $selectedEventId = null;
 $old = is_array($flash['old'] ?? null) ? $flash['old'] : [];
 
@@ -92,7 +115,9 @@ if ($fatalError === null) {
             $counts = (new DashboardRepository(db()))->counts();
             $events = (new EventRepository(db()))->upcoming(3);
         } elseif ($page === 'activities') {
-            $events = (new EventRepository(db()))->upcoming(100);
+            $events = ($currentUser['role'] ?? '') === 'coordinator'
+                ? (new EventRepository(db()))->allForCoordinator(200)
+                : (new EventRepository(db()))->upcoming(100);
         } elseif ($page === 'new_activity') {
             auth()->requireRole('coordinator');
         } elseif ($page === 'activity') {
@@ -129,6 +154,8 @@ if ($fatalError === null) {
             $selectedEventId = $requestedEvent ? (int) $requestedEvent : (isset($events[0]) ? (int) $events[0]['id'] : null);
             $assignments = (new AssignmentRepository(db()))->allActive($selectedEventId);
             $replacementRequests = (new AssignmentRepository(db()))->openReplacementRequests($selectedEventId);
+            $replacementHistory = (new AssignmentRepository(db()))->replacementHistory($selectedEventId);
+            $assignmentHistory = (new AssignmentRepository(db()))->history($selectedEventId);
             $runs = (new AllocationRepository(db()))->runs($selectedEventId);
             if ($selectedEventId !== null) {
                 $shifts = (new EventRepository(db()))->shifts($selectedEventId);
@@ -137,10 +164,13 @@ if ($fatalError === null) {
         } elseif ($page === 'my_shifts') {
             $user = auth()->requireRole('volunteer');
             $myShifts = (new AssignmentRepository(db()))->mine((int) $user['id']);
+            $myShiftHistory = (new AssignmentRepository(db()))->mineHistory((int) $user['id']);
         } elseif ($page === 'stats') {
             auth()->requireRole('coordinator');
             $reportRows = (new ReportRepository(db()))->summary();
             $runs = (new ReportRepository(db()))->algorithmRuns();
+            $shiftReportRows = (new ReportRepository(db()))->shiftSummary();
+            $comparisonGroups = (new ReportRepository(db()))->comparisonGroups();
         }
     } catch (HttpException $exception) {
         $statusCode = $exception->status;
@@ -276,6 +306,14 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                 <article class="metric-card"><span class="metric-icon">◷</span><div><strong><?= h($counts['shifts']) ?></strong><span>Ca hoạt động</span></div></article>
                 <article class="metric-card"><span class="metric-icon">✓</span><div><strong><?= h($counts['registrations']) ?></strong><span>Lượt đăng ký</span></div></article>
             </div>
+            <?php if (($currentUser['role'] ?? '') === 'coordinator'): ?>
+                <div class="metric-grid metric-grid-secondary">
+                    <article class="metric-card"><span class="metric-icon">●</span><div><strong><?= h($counts['full_shifts']) ?></strong><span>Ca đã đủ người</span></div></article>
+                    <article class="metric-card"><span class="metric-icon">△</span><div><strong><?= h($counts['short_shifts']) ?></strong><span>Ca còn thiếu</span></div></article>
+                    <article class="metric-card"><span class="metric-icon">−</span><div><strong><?= h($counts['missing_positions']) ?></strong><span>Vị trí còn thiếu</span></div></article>
+                    <article class="metric-card"><span class="metric-icon">↻</span><div><strong><?= h($counts['open_replacements']) ?></strong><span>Yêu cầu thay mở</span></div></article>
+                </div>
+            <?php endif; ?>
         </section>
 
         <section class="section-block">
@@ -287,7 +325,7 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
         </section>
     <?php elseif ($page === 'activities'): ?>
         <section class="page-heading">
-            <div><span class="eyebrow">Cùng tham gia</span><h1>Hoạt động sắp diễn ra</h1><p>Chọn một hoạt động phù hợp để xem ca và đăng ký đóng góp.</p></div>
+            <div><span class="eyebrow">Cùng tham gia</span><h1><?= ($currentUser['role'] ?? '') === 'coordinator' ? 'Kho hoạt động' : 'Hoạt động sắp diễn ra' ?></h1><p><?= ($currentUser['role'] ?? '') === 'coordinator' ? 'Theo dõi cả hoạt động đang mở, đã kết thúc và đã đóng.' : 'Chọn một hoạt động phù hợp để xem ca và đăng ký đóng góp.' ?></p></div>
             <?php if (($currentUser['role'] ?? '') === 'coordinator'): ?><a class="button" href="<?= h(route_url('new_activity')) ?>">+ Tạo hoạt động</a><?php endif; ?>
         </section>
         <?php require __DIR__ . '/partials/event_cards.php'; ?>
@@ -315,7 +353,7 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                 <dl class="event-facts"><div><dt>Thời gian</dt><dd><?= h(format_local_datetime($event['start_at'])) ?><br>đến <?= h(format_local_datetime($event['end_at'])) ?></dd></div><div><dt>Địa điểm</dt><dd><?= h($event['location']) ?></dd></div></dl>
             </div>
             <div class="banner-actions">
-                <?php if (($currentUser['role'] ?? '') === 'volunteer' && $event['status'] === 'published'): ?>
+                <?php if (($currentUser['role'] ?? '') === 'volunteer' && $event['status'] === 'published' && $event['end_at'] >= gmdate('Y-m-d H:i:s')): ?>
                     <?php if ($registered): ?><span class="registered-badge">✓ Bạn đã đăng ký</span>
                         <form method="post" class="inline-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="withdraw"><input type="hidden" name="event_id" value="<?= h($event['id']) ?>"><button class="button button-ghost button-small" type="submit">Rút đăng ký</button></form>
                     <?php else: ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="register"><input type="hidden" name="event_id" value="<?= h($event['id']) ?>"><button class="button" type="submit">Đăng ký tham gia</button></form><?php endif; ?>
@@ -420,10 +458,11 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
             <section class="section-block action-grid">
                 <form method="post" class="panel form-card stack-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="generate_allocation"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><span class="eyebrow">Sinh phương án</span><h2>Chạy thuật toán</h2><label>Thuật toán<select name="algorithm"><option value="scarcity_balanced">Cải tiến — ưu tiên khan hiếm & cân bằng</option><option value="registration_order">Baseline — thứ tự đăng ký</option></select></label><button class="button" type="submit">Tạo phương án nháp</button></form>
                 <form method="post" class="panel form-card stack-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="manual_assign"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><span class="eyebrow">Can thiệp thủ công</span><h2>Thêm phân công</h2><label>Ca<select name="shift_id"><?php foreach ($shifts as $shift): ?><option value="<?= h($shift['id']) ?>"><?= h($shift['name']) ?> · <?= h(format_local_datetime($shift['start_at'])) ?></option><?php endforeach; ?></select></label><label>Tình nguyện viên<select name="volunteer_id"><?php foreach ($registrants as $person): ?><option value="<?= h($person['id']) ?>"><?= h($person['full_name']) ?></option><?php endforeach; ?></select></label><button class="button button-secondary" type="submit">Kiểm tra & phân công</button></form>
+                <form method="post" class="panel form-card stack-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="compare_allocation"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><span class="eyebrow">Đối chứng công bằng</span><h2>So sánh cùng snapshot</h2><p>Chạy baseline và thuật toán cải tiến trên đúng cùng dữ liệu/phiên bản lịch; cấu hình từng thuật toán được lưu.</p><button class="button button-secondary" type="submit">Chạy cặp đối chứng</button></form>
             </section>
             <section class="section-block"><div class="section-heading"><div><span class="eyebrow">Phương án</span><h2>Lịch sử chạy</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Mã</th><th>Thuật toán</th><th>Trạng thái</th><th>Đủ ca</th><th>Lấp vị trí</th><th>Vi phạm</th><th>Giải thích</th><th></th></tr></thead><tbody>
             <?php if ($runs === []): ?><tr><td class="empty-cell" colspan="8">Chưa có phương án.</td></tr><?php else: foreach ($runs as $run): ?>
-                <tr><td>#<?= h($run['id']) ?></td><td><?= h($run['algorithm']) ?> v<?= h($run['algorithm_version']) ?></td><td><span class="status-pill"><?= h($run['status']) ?></span></td><td><?= h($run['metrics']['full_shift_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['filled_position_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['violation_count'] ?? '—') ?></td><td><details><summary><?= count($run['metrics']['shortages'] ?? []) ?> ca thiếu · <?= count($run['unassigned']) ?> người 0 ca</summary><div class="detail-popover"><?php foreach (($run['metrics']['shortages'] ?? []) as $shortage): ?><p><strong><?= h($shortage['name']) ?></strong>: thiếu <?= h($shortage['missing']) ?>/<?= h($shortage['required_count']) ?></p><?php endforeach; ?><?php foreach (array_slice($run['unassigned'], 0, 10) as $person): ?><p><?= h($person['name']) ?>: <?= h($person['reason']) ?></p><?php endforeach; ?></div></details></td><td><?php if ($run['status'] === 'draft'): ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="publish_allocation"><input type="hidden" name="run_id" value="<?= h($run['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><button class="button button-small" type="submit">Công bố</button></form><?php endif; ?></td></tr>
+                <tr><td>#<?= h($run['id']) ?></td><td><?= h($run['algorithm']) ?> v<?= h($run['algorithm_version']) ?><br><small><?= h($run['project_version']) ?> · <?= h(substr($run['snapshot_sha256'], 0, 10)) ?>…</small></td><td><span class="status-pill"><?= h($run['status']) ?></span></td><td><?= h($run['metrics']['full_shift_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['filled_position_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['violation_count'] ?? '—') ?></td><td><details><summary><?= count($run['metrics']['shortages'] ?? []) ?> ca thiếu · <?= count($run['unassigned']) ?> người 0 ca</summary><div class="detail-popover"><?php foreach (($run['metrics']['shortages'] ?? []) as $shortage): ?><p><strong><?= h($shortage['name']) ?></strong>: thiếu <?= h($shortage['missing']) ?>/<?= h($shortage['required_count']) ?></p><?php endforeach; ?><?php foreach ($run['unassigned'] as $person): ?><p><?= h($person['name']) ?>: <?= h($person['reason']) ?></p><?php endforeach; ?></div></details></td><td><?php if ($run['status'] === 'draft'): ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="publish_allocation"><input type="hidden" name="run_id" value="<?= h($run['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><button class="button button-small" type="submit">Công bố</button></form><?php endif; ?></td></tr>
             <?php endforeach; endif; ?></tbody></table></div></section>
             <section class="section-block">
                 <div class="section-heading"><div><span class="eyebrow">Lịch đang công bố</span><h2>Phân công hiện tại</h2></div><a class="button button-secondary button-small" href="<?= h(route_url('export', ['type' => 'assignments', 'event_id' => $selectedEventId])) ?>">Xuất CSV</a></div>
@@ -431,6 +470,7 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                 <?php if ($assignments === []): ?><tr><td colspan="5" class="empty-cell">Chưa có phân công đang hoạt động.</td></tr><?php else: foreach ($assignments as $assignment): ?>
                     <tr><td><strong><?= h($assignment['shift_name']) ?></strong><br><small><?= h($assignment['event_name']) ?></small></td><td><?= h($assignment['volunteer_name']) ?></td><td><?= h(format_local_datetime($assignment['start_at'])) ?></td><td><?= h($assignment['status']) ?></td><td>
                         <form method="post" class="inline-action"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="mark_absent"><input type="hidden" name="assignment_id" value="<?= h($assignment['id']) ?>"><input type="hidden" name="version" value="<?= h($assignment['version']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><input name="reason" aria-label="Lý do vắng" placeholder="Lý do vắng" required><button class="button button-small button-ghost" type="submit">Báo vắng</button></form>
+                        <form method="post" class="inline-action"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="transfer_assignment"><input type="hidden" name="assignment_id" value="<?= h($assignment['id']) ?>"><input type="hidden" name="version" value="<?= h($assignment['version']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><select name="volunteer_id" aria-label="Người nhận phân công mới"><?php foreach ($registrants as $person): ?><option value="<?= h($person['id']) ?>"><?= h($person['full_name']) ?></option><?php endforeach; ?></select><button class="button button-small button-secondary" type="submit">Chuyển</button></form>
                         <form method="post" class="inline-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="cancel_assignment"><input type="hidden" name="assignment_id" value="<?= h($assignment['id']) ?>"><input type="hidden" name="version" value="<?= h($assignment['version']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><button class="link-button danger-link" type="submit">Gỡ phân công</button></form>
                     </td></tr>
                 <?php endforeach; endif; ?></tbody></table></div>
@@ -439,16 +479,23 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                 <div class="section-heading"><div><span class="eyebrow">Thay người</span><h2>Yêu cầu đang chờ</h2></div><span class="count-badge"><?= count($replacementRequests) ?> yêu cầu</span></div>
                 <div class="panel table-wrap"><table><thead><tr><th>Người vắng</th><th>Ca</th><th>Lý do</th><th>Chọn người thay</th></tr></thead><tbody>
                 <?php if ($replacementRequests === []): ?><tr><td colspan="4" class="empty-cell">Không có yêu cầu thay người.</td></tr><?php else: foreach ($replacementRequests as $request): ?>
-                    <tr><td><?= h($request['absent_volunteer_name']) ?></td><td><strong><?= h($request['shift_name']) ?></strong><br><?= h(format_local_datetime($request['start_at'])) ?></td><td><?= h($request['reason']) ?></td><td><form method="post" class="inline-action"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="replace_absent"><input type="hidden" name="request_id" value="<?= h($request['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><select name="volunteer_id"><?php foreach ($registrants as $person): ?><option value="<?= h($person['id']) ?>"><?= h($person['full_name']) ?></option><?php endforeach; ?></select><button class="button button-small" type="submit">Kiểm tra & thay</button></form></td></tr>
+                    <tr><td><?= h($request['absent_volunteer_name']) ?></td><td><strong><?= h($request['shift_name']) ?></strong><br><?= h(format_local_datetime($request['start_at'])) ?></td><td><?= h($request['reason']) ?></td><td><form method="post" class="inline-action"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="replace_absent"><input type="hidden" name="request_id" value="<?= h($request['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><select name="volunteer_id"><?php foreach ($registrants as $person): ?><option value="<?= h($person['id']) ?>"><?= h($person['full_name']) ?></option><?php endforeach; ?></select><button class="button button-small" type="submit">Kiểm tra & thay</button></form><form method="post" class="inline-action"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="mark_replacement_unfilled"><input type="hidden" name="request_id" value="<?= h($request['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><input name="resolution_note" maxlength="1000" placeholder="Lý do chưa tìm được người"><button class="button button-small button-ghost" type="submit">Kết thúc chưa có người</button></form></td></tr>
                 <?php endforeach; endif; ?></tbody></table></div>
+            </section>
+            <section class="section-block action-grid">
+                <div><div class="section-heading"><div><span class="eyebrow">Lưu vết</span><h2>Lịch sử phân công</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Người</th><th>Ca</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead><tbody><?php if ($assignmentHistory === []): ?><tr><td colspan="4" class="empty-cell">Chưa có phân công đã kết thúc.</td></tr><?php else: foreach ($assignmentHistory as $item): ?><tr><td><?= h($item['volunteer_name']) ?></td><td><?= h($item['shift_name']) ?></td><td><?= h($item['status']) ?></td><td><?= h(format_local_datetime($item['updated_at'])) ?></td></tr><?php endforeach; endif; ?></tbody></table></div></div>
+                <div><div class="section-heading"><div><span class="eyebrow">Thay người</span><h2>Lịch sử xử lý</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Người vắng / ca</th><th>Kết quả</th><th>Ghi chú</th><th></th></tr></thead><tbody><?php if ($replacementHistory === []): ?><tr><td colspan="4" class="empty-cell">Chưa có yêu cầu đã xử lý.</td></tr><?php else: foreach ($replacementHistory as $item): ?><tr><td><?= h($item['absent_volunteer_name']) ?><br><small><?= h($item['shift_name']) ?></small></td><td><?= h($item['status']) ?><?= $item['replacement_volunteer_name'] ? '<br><small>' . h($item['replacement_volunteer_name']) . '</small>' : '' ?></td><td><?= h($item['resolution_note'] ?: '—') ?></td><td><?php if ($item['status'] === 'unfilled'): ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="reopen_replacement"><input type="hidden" name="request_id" value="<?= h($item['id']) ?>"><input type="hidden" name="event_id" value="<?= h($selectedEventId) ?>"><button class="button button-small button-ghost" type="submit">Mở lại</button></form><?php endif; ?></td></tr><?php endforeach; endif; ?></tbody></table></div></div>
             </section>
         <?php else: ?><div class="panel empty-inline">Chưa có hoạt động để phân công.</div><?php endif; ?>
     <?php elseif ($page === 'my_shifts'): ?>
         <section class="page-heading"><div><span class="eyebrow">Lịch cá nhân</span><h1>Ca của tôi</h1><p>Xem và xác nhận các ca đã được điều phối công bố.</p></div></section>
         <div class="event-grid"><?php if ($myShifts === []): ?><div class="panel empty-inline">Bạn chưa có ca được phân công.</div><?php else: foreach ($myShifts as $item): ?><article class="panel form-card"><span class="status-pill"><?= h($item['status']) ?></span><h3><?= h($item['shift_name']) ?></h3><p><strong><?= h($item['event_name']) ?></strong><br><?= h($item['location']) ?><br><?= h(format_local_datetime($item['start_at'])) ?> — <?= h(format_local_datetime($item['end_at'])) ?></p><div class="card-actions"><?php if ($item['status'] === 'assigned'): ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="confirm_assignment"><input type="hidden" name="assignment_id" value="<?= h($item['id']) ?>"><input type="hidden" name="version" value="<?= h($item['version']) ?>"><button class="button button-small" type="submit">Xác nhận tham gia</button></form><?php endif; ?><form method="post"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="report_absent"><input type="hidden" name="assignment_id" value="<?= h($item['id']) ?>"><input type="hidden" name="version" value="<?= h($item['version']) ?>"><input name="reason" maxlength="1000" placeholder="Lý do báo vắng" required><button class="button button-small button-ghost" type="submit">Báo vắng</button></form></div></article><?php endforeach; endif; ?></div>
+        <section class="section-block"><div class="section-heading"><div><span class="eyebrow">Lưu vết cá nhân</span><h2>Lịch sử ca</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Hoạt động</th><th>Ca</th><th>Thời gian</th><th>Trạng thái</th></tr></thead><tbody><?php if ($myShiftHistory === []): ?><tr><td colspan="4" class="empty-cell">Chưa có ca trong lịch sử.</td></tr><?php else: foreach ($myShiftHistory as $item): ?><tr><td><?= h($item['event_name']) ?></td><td><?= h($item['shift_name']) ?></td><td><?= h(format_local_datetime($item['start_at'])) ?></td><td><?= h($item['status']) ?></td></tr><?php endforeach; endif; ?></tbody></table></div></section>
     <?php elseif ($page === 'stats'): ?>
         <section class="page-heading"><div><span class="eyebrow">Báo cáo</span><h1>Thống kê & so sánh</h1><p>Số liệu lấy trực tiếp từ MySQL; kết quả thuật toán gắn với snapshot và phiên bản.</p></div><a class="button button-secondary" href="<?= h(route_url('export', ['type' => 'summary'])) ?>">Xuất tổng hợp CSV</a></section>
         <div class="panel table-wrap"><table><thead><tr><th>Hoạt động</th><th>Ca</th><th>Đăng ký</th><th>Vị trí cần</th><th>Đã phân công</th><th>Đã xác nhận</th><th>Còn thiếu</th><th>Tỷ lệ lấp</th></tr></thead><tbody><?php foreach ($reportRows as $row): $fill = (int) $row['required_positions'] > 0 ? round(100 * (int) $row['assigned_positions'] / (int) $row['required_positions'], 1) : 0; $missing = max(0, (int) $row['required_positions'] - (int) $row['assigned_positions']); ?><tr><td><strong><?= h($row['name']) ?></strong></td><td><?= h($row['shifts']) ?></td><td><?= h($row['registrations']) ?></td><td><?= h($row['required_positions']) ?></td><td><?= h($row['assigned_positions']) ?></td><td><?= h($row['confirmed_positions']) ?></td><td><?= h($missing) ?></td><td><?= h($fill) ?>%</td></tr><?php endforeach; ?></tbody></table></div>
+        <section class="section-block"><div class="section-heading"><div><span class="eyebrow">Vận hành trực tiếp</span><h2>Tình trạng từng ca</h2></div><a class="button button-secondary button-small" href="<?= h(route_url('export', ['type' => 'shift_status'])) ?>">Xuất tình trạng ca</a></div><div class="panel table-wrap"><table><thead><tr><th>Hoạt động / ca</th><th>Thời gian</th><th>Kỹ năng</th><th>Cần</th><th>Đã xếp</th><th>Xác nhận</th><th>Còn thiếu</th><th>Thay người</th></tr></thead><tbody><?php if ($shiftReportRows === []): ?><tr><td colspan="8" class="empty-cell">Chưa có ca để thống kê.</td></tr><?php else: foreach ($shiftReportRows as $row): ?><tr><td><strong><?= h($row['shift_name']) ?></strong><br><small><?= h($row['event_name']) ?></small></td><td><?= h(format_local_datetime($row['start_at'])) ?></td><td><?= h($row['required_skills'] ?: 'Không yêu cầu') ?></td><td><?= h($row['required_count']) ?></td><td><?= h($row['assigned_count']) ?></td><td><?= h($row['confirmed_count']) ?></td><td><span class="status-pill <?= (int) $row['missing_count'] > 0 ? 'status-warning' : '' ?>"><?= h($row['missing_count']) ?></span></td><td><?= h($row['open_replacements']) ?> mở · <?= h($row['unfilled_replacements']) ?> chưa tìm được</td></tr><?php endforeach; endif; ?></tbody></table></div></section>
+        <section class="section-block"><div class="section-heading"><div><span class="eyebrow">A/B cùng dữ liệu</span><h2>Cặp đối chứng hợp lệ</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Hoạt động / nhóm</th><th>Snapshot / mã nguồn</th><th>Baseline</th><th>Cải tiến</th><th>Chênh lệch</th></tr></thead><tbody><?php if ($comparisonGroups === []): ?><tr><td colspan="5" class="empty-cell">Chưa có cặp đối chứng. Chạy tại trang Phân công.</td></tr><?php else: foreach ($comparisonGroups as $group): $baseline = $group['baseline']; $improved = $group['improved']; $baseFill = $baseline ? (float) ($baseline['metrics']['filled_position_rate'] ?? 0) : 0; $improvedFill = $improved ? (float) ($improved['metrics']['filled_position_rate'] ?? 0) : 0; ?><tr><td><strong><?= h($group['event_name']) ?></strong><br><small><?= h(substr($group['id'], 0, 12)) ?></small></td><td><code><?= h(substr($group['snapshot_sha256'], 0, 12)) ?>…</code><br><small><?= h($group['project_version']) ?> · <?= h($group['dataset_code']) ?></small></td><td><?= $baseline ? h($baseFill) . '% lấp · tải ' . h($baseline['metrics']['load_gap'] ?? '—') : 'Thiếu bản chạy' ?></td><td><?= $improved ? h($improvedFill) . '% lấp · tải ' . h($improved['metrics']['load_gap'] ?? '—') : 'Thiếu bản chạy' ?></td><td><?= ($baseline && $improved) ? h(round($improvedFill - $baseFill, 1)) . ' điểm %' : '—' ?></td></tr><?php endforeach; endif; ?></tbody></table></div></section>
         <section class="section-block"><div class="section-heading"><div><span class="eyebrow">Đối chứng</span><h2>Kết quả các lần chạy</h2></div></div><div class="panel table-wrap"><table><thead><tr><th>Hoạt động</th><th>Thuật toán / phiên bản</th><th>Trạng thái</th><th>Đủ ca</th><th>Lấp vị trí</th><th>Chênh tải</th><th>Vi phạm</th></tr></thead><tbody><?php if ($runs === []): ?><tr><td class="empty-cell" colspan="7">Chưa có bản chạy trong MySQL. Có thể chạy fixture bằng lệnh trong README.</td></tr><?php else: foreach ($runs as $run): ?><tr><td><?= h($run['event_name']) ?></td><td><?= h($run['algorithm']) ?> v<?= h($run['algorithm_version']) ?></td><td><?= h($run['status']) ?></td><td><?= h($run['metrics']['full_shift_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['filled_position_rate'] ?? '—') ?>%</td><td><?= h($run['metrics']['load_gap'] ?? '—') ?></td><td><?= h($run['metrics']['violation_count'] ?? '—') ?></td></tr><?php endforeach; endif; ?></tbody></table></div></section>
     <?php else: ?>
         <?php http_response_code(404); ?>

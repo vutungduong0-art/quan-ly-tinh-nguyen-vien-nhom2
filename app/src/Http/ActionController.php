@@ -26,13 +26,17 @@ final class ActionController
             case 'add_availability': $this->addAvailability();
             case 'delete_availability': $this->deleteAvailability();
             case 'generate_allocation': $this->generateAllocation();
+            case 'compare_allocation': $this->compareAllocation();
             case 'publish_allocation': $this->publishAllocation();
             case 'manual_assign': $this->manualAssign();
+            case 'transfer_assignment': $this->transferAssignment();
             case 'confirm_assignment': $this->confirmAssignment();
             case 'report_absent': $this->reportAbsent();
             case 'mark_absent': $this->markAbsent();
             case 'cancel_assignment': $this->cancelAssignment();
             case 'replace_absent': $this->replaceAbsent();
+            case 'mark_replacement_unfilled': $this->markReplacementUnfilled();
+            case 'reopen_replacement': $this->reopenReplacement();
             default: throw new HttpException(400, 'Yêu cầu không hợp lệ.');
         }
     }
@@ -267,6 +271,20 @@ final class ActionController
         redirect_to('assignments', ['event_id' => $eventId]);
     }
 
+    private function compareAllocation(): never
+    {
+        $user = $this->auth->requireRole('coordinator');
+        $eventId = $this->positiveId('event_id', 'Hoạt động');
+        try {
+            $result = (new AllocationRepository($this->db))->generateComparison($eventId, (int) $user['id']);
+            set_flash('success', 'Đã chạy đối chứng trên cùng snapshot: baseline #' . $result['baseline_run_id']
+                . ' và cải tiến #' . $result['improved_run_id'] . '.');
+        } catch (DomainException $exception) {
+            set_flash('error', $exception->getMessage());
+        }
+        redirect_to('assignments', ['event_id' => $eventId]);
+    }
+
     private function publishAllocation(): never
     {
         $user = $this->auth->requireRole('coordinator');
@@ -290,6 +308,22 @@ final class ActionController
         try {
             (new AssignmentRepository($this->db))->manualAssign($shiftId, $volunteerId, (int) $user['id']);
             set_flash('success', 'Đã phân công thủ công và kiểm tra ràng buộc.');
+        } catch (DomainException $exception) {
+            set_flash('error', $exception->getMessage());
+        }
+        redirect_to('assignments', ['event_id' => $eventId]);
+    }
+
+    private function transferAssignment(): never
+    {
+        $user = $this->auth->requireRole('coordinator');
+        $assignmentId = $this->positiveId('assignment_id', 'Phân công');
+        $volunteerId = $this->positiveId('volunteer_id', 'Người nhận mới');
+        $version = $this->positiveId('version', 'Phiên bản');
+        $eventId = $this->positiveId('event_id', 'Hoạt động');
+        try {
+            (new AssignmentRepository($this->db))->transfer($assignmentId, $volunteerId, $version, (int) $user['id']);
+            set_flash('success', 'Đã chuyển phân công nguyên tử; phân công cũ và mới được cập nhật cùng giao dịch.');
         } catch (DomainException $exception) {
             set_flash('error', $exception->getMessage());
         }
@@ -364,6 +398,38 @@ final class ActionController
         try {
             (new AssignmentRepository($this->db))->replaceAbsent($requestId, $volunteerId, (int) $user['id']);
             set_flash('success', 'Đã thay người và cập nhật lịch trong một giao dịch.');
+        } catch (DomainException $exception) {
+            set_flash('error', $exception->getMessage());
+        }
+        redirect_to('assignments', ['event_id' => $eventId]);
+    }
+
+    private function markReplacementUnfilled(): never
+    {
+        $user = $this->auth->requireRole('coordinator');
+        $requestId = $this->positiveId('request_id', 'Yêu cầu');
+        $eventId = $this->positiveId('event_id', 'Hoạt động');
+        try {
+            (new AssignmentRepository($this->db))->markReplacementUnfilled(
+                $requestId,
+                $this->text('resolution_note', 'Không tìm được người thay phù hợp'),
+                (int) $user['id']
+            );
+            set_flash('success', 'Đã kết thúc yêu cầu với trạng thái chưa tìm được người thay.');
+        } catch (DomainException $exception) {
+            set_flash('error', $exception->getMessage());
+        }
+        redirect_to('assignments', ['event_id' => $eventId]);
+    }
+
+    private function reopenReplacement(): never
+    {
+        $user = $this->auth->requireRole('coordinator');
+        $requestId = $this->positiveId('request_id', 'Yêu cầu');
+        $eventId = $this->positiveId('event_id', 'Hoạt động');
+        try {
+            (new AssignmentRepository($this->db))->reopenReplacement($requestId, (int) $user['id']);
+            set_flash('success', 'Đã mở lại yêu cầu tìm người thay.');
         } catch (DomainException $exception) {
             set_flash('error', $exception->getMessage());
         }

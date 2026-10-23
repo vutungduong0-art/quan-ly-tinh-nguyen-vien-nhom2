@@ -109,12 +109,23 @@ function cleanupHttpEvent(mysqli $db, int $eventId): void
         $db->query("SELECT dataset_version_id FROM allocation_runs WHERE event_id = $eventId")->fetch_all(MYSQLI_ASSOC),
         'dataset_version_id'
     ));
+    $auditIds = array_map('intval', array_column($db->query(
+        "SELECT al.id FROM audit_logs al WHERE al.entity_type = 'event' AND al.entity_id = $eventId
+         UNION SELECT al.id FROM audit_logs al JOIN shifts s ON s.id = al.entity_id
+               WHERE al.entity_type = 'shift' AND s.event_id = $eventId
+         UNION SELECT al.id FROM audit_logs al JOIN allocation_runs ar ON ar.id = al.entity_id
+               WHERE al.entity_type = 'allocation_run' AND ar.event_id = $eventId
+         UNION SELECT al.id FROM audit_logs al JOIN assignments a ON a.id = al.entity_id
+               JOIN shifts s ON s.id = a.shift_id WHERE al.entity_type = 'assignment' AND s.event_id = $eventId
+         UNION SELECT al.id FROM audit_logs al JOIN replacement_requests rr ON rr.id = al.entity_id
+               JOIN assignments a ON a.id = rr.assignment_id JOIN shifts s ON s.id = a.shift_id
+               WHERE al.action = 'replacement.reopened' AND s.event_id = $eventId"
+    )->fetch_all(MYSQLI_ASSOC), 'id'));
     $db->begin_transaction();
     try {
-        $db->query("DELETE FROM audit_logs WHERE entity_type = 'event' AND entity_id = $eventId");
-        $db->query("DELETE FROM audit_logs WHERE entity_type = 'shift' AND entity_id IN (SELECT id FROM shifts WHERE event_id = $eventId)");
-        $db->query("DELETE FROM audit_logs WHERE entity_type = 'allocation_run' AND entity_id IN (SELECT id FROM allocation_runs WHERE event_id = $eventId)");
-        $db->query("DELETE FROM audit_logs WHERE entity_type = 'assignment' AND entity_id IN (SELECT a.id FROM assignments a JOIN shifts s ON s.id = a.shift_id WHERE s.event_id = $eventId)");
+        if ($auditIds !== []) {
+            $db->query('DELETE FROM audit_logs WHERE id IN (' . implode(',', $auditIds) . ')');
+        }
         $db->query("DELETE rr FROM replacement_requests rr JOIN assignments a ON a.id = rr.assignment_id JOIN shifts s ON s.id = a.shift_id WHERE s.event_id = $eventId");
         $db->query("DELETE a FROM assignments a JOIN shifts s ON s.id = a.shift_id WHERE s.event_id = $eventId");
         $db->query("DELETE FROM allocation_runs WHERE event_id = $eventId");
@@ -126,6 +137,14 @@ function cleanupHttpEvent(mysqli $db, int $eventId): void
             $db->query("DELETE FROM dataset_versions WHERE id = $datasetId AND NOT EXISTS (SELECT 1 FROM allocation_runs WHERE dataset_version_id = $datasetId)");
         }
         $db->commit();
+        if ($auditIds !== []) {
+            $remainingAudits = (int) $db->query(
+                'SELECT COUNT(*) AS total FROM audit_logs WHERE id IN (' . implode(',', $auditIds) . ')'
+            )->fetch_assoc()['total'];
+            if ($remainingAudits !== 0) {
+                throw new RuntimeException('Nhật ký audit của dữ liệu HTTP tạm chưa được dọn hết.');
+            }
+        }
     } catch (Throwable $exception) {
         $db->rollback();
         throw $exception;
@@ -302,15 +321,85 @@ checkStep('Dữ liệu còn trong MySQL sau nhiều lượt tải trang', functi
 });
 
 $profilePage = httpRequest('GET', $baseUrl . '/?page=volunteers', [], $cookie);
-checkStep('Tình nguyện viên quản lý hồ sơ và lịch rảnh', function () use ($profilePage): void {
+$profileDb = (new Database((string) $config))->connection();
+$profile = $profileDb->query(
+    "SELECT u.id, u.full_name, COALESCE(vp.volunteer_code, u.username) AS volunteer_code,
+            COALESCE(vp.phone, '') AS phone, COALESCE(vp.email, '') AS email, COALESCE(vp.notes, '') AS notes
+     FROM users u LEFT JOIN volunteer_profiles vp ON vp.user_id = u.id WHERE u.username = 'tinhnguyen'"
+)->fetch_assoc();
+$profileSkillIds = array_map('intval', array_column(
+    $profileDb->query('SELECT skill_id FROM volunteer_skills WHERE volunteer_id = ' . (int) $profile['id'])->fetch_all(MYSQLI_ASSOC),
+    'skill_id'
+));
+$savedProfile = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($profilePage['body']),
+    'action' => 'save_profile',
+    'full_name' => $profile['full_name'],
+    'volunteer_code' => $profile['volunteer_code'],
+    'phone' => $profile['phone'],
+    'email' => $profile['email'],
+    'notes' => $profile['notes'],
+], $cookie);
+$savedSkills = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($profilePage['body']),
+    'action' => 'save_skills',
+    'skill_ids' => $profileSkillIds,
+], $cookie);
+$addedAvailability = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($profilePage['body']),
+    'action' => 'add_availability',
+    'start_at' => '2038-02-01T08:00',
+    'end_at' => '2038-02-01T10:00',
+], $cookie);
+$temporaryAvailability = $profileDb->query(
+    "SELECT id FROM availability WHERE volunteer_id = " . (int) $profile['id']
+    . " AND start_at = '2038-02-01 01:00:00' AND end_at = '2038-02-01 03:00:00' ORDER BY id DESC LIMIT 1"
+)->fetch_assoc();
+$profileAfterAdd = httpRequest('GET', $baseUrl . '/?page=volunteers', [], $cookie);
+$deletedAvailability = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($profileAfterAdd['body']),
+    'action' => 'delete_availability',
+    'slot_id' => (int) ($temporaryAvailability['id'] ?? 0),
+], $cookie);
+$temporaryAvailabilityCount = (int) $profileDb->query(
+    "SELECT COUNT(*) AS total FROM availability WHERE volunteer_id = " . (int) $profile['id']
+    . " AND start_at = '2038-02-01 01:00:00' AND end_at = '2038-02-01 03:00:00'"
+)->fetch_assoc()['total'];
+checkStep('Tình nguyện viên thật sự lưu hồ sơ, kỹ năng và thêm/xóa lịch rảnh', function () use (
+    $profilePage,
+    $savedProfile,
+    $savedSkills,
+    $addedAvailability,
+    $deletedAvailability,
+    $temporaryAvailability,
+    $temporaryAvailabilityCount
+): void {
     expect($profilePage['status'] === 200, 'Không mở được trang hồ sơ');
     expect(str_contains($profilePage['body'], 'Kỹ năng') && str_contains($profilePage['body'], 'Thêm lịch rảnh'), 'Thiếu chức năng hồ sơ');
     expect(!hasNestedForms($profilePage['body']), 'Trang hồ sơ còn form lồng nhau không hợp lệ');
+    expect($savedProfile['status'] === 303 && $savedSkills['status'] === 303, 'Lưu hồ sơ/kỹ năng không qua PRG');
+    expect($addedAvailability['status'] === 303 && (int) ($temporaryAvailability['id'] ?? 0) > 0, 'Không lưu được lịch rảnh qua HTTP');
+    expect($deletedAvailability['status'] === 303 && $temporaryAvailabilityCount === 0, 'Không xóa được lịch rảnh vừa tạo');
 });
 
 $forbiddenAssignments = httpRequest('GET', $baseUrl . '/?page=assignments', [], $cookie);
 checkStep('Chặn tình nguyện viên mở trang phân công', function () use ($forbiddenAssignments): void {
     expect($forbiddenAssignments['status'] === 403, 'Trang phân công không trả 403');
+});
+
+$forbiddenComparison = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($profilePage['body']),
+    'action' => 'compare_allocation',
+    'event_id' => $createdId,
+], $cookie);
+checkStep('Chặn tình nguyện viên gọi action đối chứng mới', function () use ($forbiddenComparison): void {
+    expect($forbiddenComparison['status'] === 403, 'Action đối chứng không kiểm tra vai trò ở máy chủ');
+});
+
+$forbiddenShiftExport = httpRequest('GET', $baseUrl . '/?page=export&type=shift_status&event_id=' . $createdId, [], $cookie);
+checkStep('Chặn tình nguyện viên xuất báo cáo tình trạng ca', function () use ($forbiddenShiftExport): void {
+    expect($forbiddenShiftExport['status'] === 403, 'Xuất báo cáo ca không kiểm tra vai trò');
+    expect(!str_starts_with($forbiddenShiftExport['body'], "\xEF\xBB\xBF"), 'Phản hồi 403 vẫn làm lộ nội dung CSV');
 });
 
 $volunteerLogout = httpRequest('POST', $baseUrl . '/', [
@@ -329,8 +418,30 @@ checkStep('Điều phối đăng nhập lại để lập lịch', function () u
 });
 
 $assignmentPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
-$generated = httpRequest('POST', $baseUrl . '/', [
+$compared = httpRequest('POST', $baseUrl . '/', [
     'csrf_token' => csrfFrom($assignmentPage['body']),
+    'action' => 'compare_allocation',
+    'event_id' => $createdId,
+], $cookie);
+$comparisonPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$comparisonDb = (new Database((string) $config))->connection();
+$comparisonRows = $comparisonDb->query(
+    "SELECT dataset_version_id, comparison_group, project_version, algorithm, status
+     FROM allocation_runs WHERE event_id = $createdId AND comparison_group IS NOT NULL ORDER BY id"
+)->fetch_all(MYSQLI_ASSOC);
+checkStep('HTTP tạo cặp đối chứng cùng snapshot và không cho công bố experiment', function () use ($compared, $comparisonPage, $comparisonRows): void {
+    expect($compared['status'] === 303, 'Đối chứng không dùng PRG');
+    expect(count($comparisonRows) === 2, 'Không lưu đúng hai bản chạy đối chứng');
+    expect($comparisonRows[0]['dataset_version_id'] === $comparisonRows[1]['dataset_version_id'], 'Hai bản chạy không dùng cùng dataset');
+    expect($comparisonRows[0]['comparison_group'] !== null && $comparisonRows[0]['comparison_group'] === $comparisonRows[1]['comparison_group'], 'Hai bản chạy không cùng comparison_group');
+    expect($comparisonRows[0]['status'] === 'experiment' && $comparisonRows[1]['status'] === 'experiment', 'Bản đối chứng không ở trạng thái experiment');
+    expect($comparisonRows[0]['project_version'] !== 'unknown', 'Không lưu phiên bản mã');
+    expect(str_contains($comparisonPage['body'], 'registration_order') && str_contains($comparisonPage['body'], 'scarcity_balanced'), 'UI không hiển thị đủ hai thuật toán');
+    expect(substr_count($comparisonPage['body'], 'name="action" value="publish_allocation"') === 0, 'UI cho phép công bố bản experiment');
+});
+
+$generated = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($comparisonPage['body']),
     'action' => 'generate_allocation',
     'event_id' => $createdId,
     'algorithm' => 'scarcity_balanced',
@@ -359,6 +470,8 @@ $statsPage = httpRequest('GET', $baseUrl . '/?page=stats', [], $cookie);
 checkStep('Báo cáo hiển thị lần chạy và chỉ số', function () use ($statsPage, $uniqueName): void {
     expect($statsPage['status'] === 200, 'Không mở được thống kê');
     expect(str_contains($statsPage['body'], $uniqueName) && str_contains($statsPage['body'], 'scarcity_balanced'), 'Báo cáo thiếu dữ liệu vừa công bố');
+    expect(str_contains($statsPage['body'], 'Cặp đối chứng hợp lệ') && str_contains($statsPage['body'], 'điểm %'), 'Báo cáo chưa ghép cặp A/B cùng snapshot');
+    expect(str_contains($statsPage['body'], 'Tình trạng từng ca'), 'Thiếu báo cáo vận hành theo ca');
 });
 
 $coordinatorLogout = httpRequest('POST', $baseUrl . '/', [
@@ -499,11 +612,137 @@ checkStep('POST thứ ba bị chặn khi ca cần hai người đã đủ', func
     expect($activeCount === 2, 'Dữ liệu đã vượt quá hai người cần');
 });
 
+$transferSource = $setupDb->query(
+    'SELECT id, version FROM assignments WHERE shift_id = ' . $createdShiftId
+    . ' AND volunteer_id = ' . (int) ($candidateIds['tinhnguyen02'] ?? 0)
+    . " AND status IN ('assigned','confirmed')"
+)->fetch_assoc();
+$transferredHttp = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($overCapacityPage['body']),
+    'action' => 'transfer_assignment',
+    'assignment_id' => (int) ($transferSource['id'] ?? 0),
+    'version' => (int) ($transferSource['version'] ?? 0),
+    'volunteer_id' => $candidateIds['tinhnguyen04'] ?? 0,
+    'event_id' => $createdId,
+], $cookie);
+$afterTransferPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$transferSourceStatus = $transferSource
+    ? $setupDb->query('SELECT status FROM assignments WHERE id = ' . (int) $transferSource['id'])->fetch_assoc()['status'] ?? null
+    : null;
+$transferTarget = $setupDb->query(
+    'SELECT id, version, status FROM assignments WHERE shift_id = ' . $createdShiftId
+    . ' AND volunteer_id = ' . (int) ($candidateIds['tinhnguyen04'] ?? 0)
+)->fetch_assoc();
+$activeAfterTransfer = (int) $setupDb->query(
+    "SELECT COUNT(*) AS total FROM assignments WHERE shift_id = $createdShiftId AND status IN ('assigned','confirmed')"
+)->fetch_assoc()['total'];
+checkStep('HTTP chuyển phân công nguyên tử và giữ nguyên sức chứa', function () use ($transferredHttp, $transferSourceStatus, $transferTarget, $activeAfterTransfer): void {
+    expect($transferredHttp['status'] === 303, 'Chuyển phân công không dùng PRG');
+    expect($transferSourceStatus === 'cancelled', 'Phân công nguồn chưa được hủy');
+    expect(($transferTarget['status'] ?? null) === 'assigned', 'Phân công đích chưa được kích hoạt');
+    expect($activeAfterTransfer === 2, 'Chuyển người làm thay đổi số người đang hiệu lực');
+});
+
+$markedAbsentByCoordinator = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($afterTransferPage['body']),
+    'action' => 'mark_absent',
+    'assignment_id' => (int) ($transferTarget['id'] ?? 0),
+    'version' => (int) ($transferTarget['version'] ?? 0),
+    'event_id' => $createdId,
+    'reason' => 'Vắng lần hai để kiểm thử unfilled',
+], $cookie);
+$afterCoordinatorAbsent = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$secondRequest = $transferTarget
+    ? $setupDb->query('SELECT id, status FROM replacement_requests WHERE assignment_id = ' . (int) $transferTarget['id'] . ' ORDER BY id DESC LIMIT 1')->fetch_assoc()
+    : null;
+checkStep('Điều phối báo vắng tạo yêu cầu thay người thứ hai', function () use ($markedAbsentByCoordinator, $secondRequest): void {
+    expect($markedAbsentByCoordinator['status'] === 303, 'Báo vắng của điều phối không dùng PRG');
+    expect((int) ($secondRequest['id'] ?? 0) > 0 && ($secondRequest['status'] ?? null) === 'open', 'Không tạo yêu cầu thay người mở');
+});
+
+$reassignAbsent = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($afterCoordinatorAbsent['body']),
+    'action' => 'manual_assign',
+    'event_id' => $createdId,
+    'shift_id' => $createdShiftId,
+    'volunteer_id' => $candidateIds['tinhnguyen04'] ?? 0,
+], $cookie);
+$reassignAbsentPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$absentAssignmentStatus = $transferTarget
+    ? $setupDb->query('SELECT status FROM assignments WHERE id = ' . (int) $transferTarget['id'])->fetch_assoc()['status'] ?? null
+    : null;
+checkStep('HTTP chặn phân lại người đã báo vắng vào cùng ca', function () use ($reassignAbsent, $reassignAbsentPage, $absentAssignmentStatus): void {
+    expect($reassignAbsent['status'] === 303, 'Phân lại người vắng không dùng PRG');
+    expect(str_contains($reassignAbsentPage['body'], 'Đã báo vắng ca này'), 'Thiếu lý do từ chối người đã báo vắng');
+    expect($absentAssignmentStatus === 'absent', 'Phân công vắng bị kích hoạt lại');
+});
+
+$markedUnfilled = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($reassignAbsentPage['body']),
+    'action' => 'mark_replacement_unfilled',
+    'request_id' => (int) ($secondRequest['id'] ?? 0),
+    'event_id' => $createdId,
+    'resolution_note' => 'Không còn ứng viên phù hợp qua HTTP',
+], $cookie);
+$unfilledPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$unfilledRow = $secondRequest
+    ? $setupDb->query('SELECT status, resolution_note, processed_by, resolved_at FROM replacement_requests WHERE id = ' . (int) $secondRequest['id'])->fetch_assoc()
+    : null;
+checkStep('HTTP kết thúc yêu cầu với trạng thái unfilled và lưu lịch sử', function () use ($markedUnfilled, $unfilledPage, $unfilledRow): void {
+    expect($markedUnfilled['status'] === 303, 'Đánh dấu unfilled không dùng PRG');
+    expect(($unfilledRow['status'] ?? null) === 'unfilled', 'Yêu cầu chưa chuyển sang unfilled');
+    expect(($unfilledRow['resolution_note'] ?? null) === 'Không còn ứng viên phù hợp qua HTTP', 'Không lưu đúng ghi chú unfilled');
+    expect(!empty($unfilledRow['processed_by']) && !empty($unfilledRow['resolved_at']), 'Thiếu người/thời điểm xử lý unfilled');
+    expect(str_contains($unfilledPage['body'], 'Không còn ứng viên phù hợp qua HTTP') && str_contains($unfilledPage['body'], 'Mở lại'), 'UI lịch sử chưa hiển thị yêu cầu unfilled');
+});
+
+$reopenedHttp = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($unfilledPage['body']),
+    'action' => 'reopen_replacement',
+    'request_id' => (int) ($secondRequest['id'] ?? 0),
+    'event_id' => $createdId,
+], $cookie);
+$reopenedPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+$reopenedRow = $secondRequest
+    ? $setupDb->query('SELECT status, resolution_note, processed_by, resolved_at FROM replacement_requests WHERE id = ' . (int) $secondRequest['id'])->fetch_assoc()
+    : null;
+checkStep('HTTP mở lại yêu cầu và xóa metadata xử lý cũ', function () use ($reopenedHttp, $reopenedPage, $reopenedRow): void {
+    expect($reopenedHttp['status'] === 303, 'Mở lại yêu cầu không dùng PRG');
+    expect(($reopenedRow['status'] ?? null) === 'open', 'Yêu cầu chưa được mở lại');
+    expect(($reopenedRow['resolution_note'] ?? null) === null && ($reopenedRow['processed_by'] ?? null) === null && ($reopenedRow['resolved_at'] ?? null) === null, 'Metadata xử lý cũ chưa được xóa');
+    expect(str_contains($reopenedPage['body'], 'Vắng lần hai để kiểm thử unfilled'), 'Yêu cầu mở lại chưa trở về hàng đợi');
+});
+
+$markedUnfilledAgain = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($reopenedPage['body']),
+    'action' => 'mark_replacement_unfilled',
+    'request_id' => (int) ($secondRequest['id'] ?? 0),
+    'event_id' => $createdId,
+    'resolution_note' => 'Kết thúc lần hai',
+], $cookie);
+$finalWorkflowPage = httpRequest('GET', $baseUrl . '/?page=assignments&event_id=' . $createdId, [], $cookie);
+checkStep('Có thể kết thúc lại yêu cầu sau khi mở lại', function () use ($markedUnfilledAgain, $setupDb, $secondRequest): void {
+    expect($markedUnfilledAgain['status'] === 303, 'Kết thúc lại không dùng PRG');
+    $status = $secondRequest
+        ? $setupDb->query('SELECT status FROM replacement_requests WHERE id = ' . (int) $secondRequest['id'])->fetch_assoc()['status'] ?? null
+        : null;
+    expect($status === 'unfilled', 'Yêu cầu không trở lại unfilled');
+});
+
 $csv = httpRequest('GET', $baseUrl . '/?page=export&type=assignments&event_id=' . $createdId, [], $cookie);
-checkStep('Xuất CSV UTF-8 khớp lịch đang hoạt động', function () use ($csv): void {
+$csvExpectedName = $setupDb->query("SELECT full_name FROM users WHERE username = 'tinhnguyen03'")->fetch_assoc()['full_name'] ?? '';
+checkStep('Xuất CSV phân công có liên hệ, kỹ năng và giờ Việt Nam', function () use ($csv, $csvExpectedName): void {
     expect($csv['status'] === 200, 'Xuất CSV không trả 200');
     expect(str_starts_with($csv['body'], "\xEF\xBB\xBF"), 'CSV thiếu UTF-8 BOM');
-    expect(str_contains($csv['body'], 'Ca kiểm thử') && str_contains($csv['body'], 'Lê Hoàng Nam'), 'CSV thiếu dữ liệu phân công');
+    expect(str_contains($csv['body'], 'Mã TNV') && str_contains($csv['body'], 'Bắt đầu (VN)') && str_contains($csv['body'], 'Kỹ năng ca'), 'CSV thiếu cột mở rộng');
+    expect(str_contains($csv['body'], 'Ca kiểm thử') && str_contains($csv['body'], $csvExpectedName), 'CSV thiếu dữ liệu phân công đang hiệu lực');
+});
+
+$shiftCsv = httpRequest('GET', $baseUrl . '/?page=export&type=shift_status&event_id=' . $createdId, [], $cookie);
+checkStep('Xuất CSV tình trạng từng ca và số thiếu', function () use ($shiftCsv, $uniqueName): void {
+    expect($shiftCsv['status'] === 200 && str_starts_with($shiftCsv['body'], "\xEF\xBB\xBF"), 'CSV tình trạng ca không hợp lệ');
+    expect(str_contains($shiftCsv['body'], 'Còn thiếu') && str_contains($shiftCsv['body'], 'Không tìm được người thay'), 'CSV tình trạng ca thiếu cột vận hành');
+    expect(str_contains($shiftCsv['body'], $uniqueName) && str_contains($shiftCsv['body'], 'Ca kiểm thử'), 'CSV tình trạng ca thiếu dữ liệu hoạt động');
 });
 
 $badCsrf = httpRequest('POST', $baseUrl . '/', [
@@ -513,10 +752,41 @@ $badCsrf = httpRequest('POST', $baseUrl . '/', [
     'shift_id' => $createdShiftId,
     'volunteer_id' => $candidateIds['tinhnguyen04'] ?? 0,
 ], $cookie);
-checkStep('POST sai CSRF bị từ chối trước khi đổi dữ liệu', function () use ($badCsrf, $setupDb, $createdShiftId): void {
+$activeBeforeBadCsrf = (int) $setupDb->query("SELECT COUNT(*) AS total FROM assignments WHERE shift_id = $createdShiftId AND status IN ('assigned','confirmed')")->fetch_assoc()['total'];
+checkStep('POST sai CSRF bị từ chối trước khi đổi dữ liệu', function () use ($badCsrf, $setupDb, $createdShiftId, $activeBeforeBadCsrf): void {
     expect($badCsrf['status'] === 419, 'CSRF sai không trả 419');
     $count = (int) $setupDb->query("SELECT COUNT(*) AS total FROM assignments WHERE shift_id = $createdShiftId AND status IN ('assigned','confirmed')")->fetch_assoc()['total'];
-    expect($count === 2, 'POST sai CSRF vẫn thay đổi dữ liệu');
+    expect($count === $activeBeforeBadCsrf, 'POST sai CSRF vẫn thay đổi dữ liệu');
+});
+
+$activeToCancel = $setupDb->query(
+    "SELECT a.id, a.version FROM assignments a JOIN shifts s ON s.id = a.shift_id
+     WHERE s.event_id = $createdId AND a.status IN ('assigned','confirmed') ORDER BY a.id"
+)->fetch_all(MYSQLI_ASSOC);
+$cancelResponses = [];
+foreach ($activeToCancel as $activeAssignment) {
+    $cancelResponses[] = httpRequest('POST', $baseUrl . '/', [
+        'csrf_token' => csrfFrom($finalWorkflowPage['body']),
+        'action' => 'cancel_assignment',
+        'assignment_id' => (int) $activeAssignment['id'],
+        'version' => (int) $activeAssignment['version'],
+        'event_id' => $createdId,
+    ], $cookie);
+}
+$closeDetail = httpRequest('GET', $baseUrl . '/?page=activity&id=' . $createdId, [], $cookie);
+$closedHttp = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($closeDetail['body']),
+    'action' => 'close_event',
+    'event_id' => $createdId,
+], $cookie);
+$archivePage = httpRequest('GET', $baseUrl . '/?page=activities', [], $cookie);
+$closedStatus = $setupDb->query("SELECT status FROM events WHERE id = $createdId")->fetch_assoc()['status'] ?? null;
+checkStep('Đóng hoạt động sau unfilled và vẫn thấy trong kho lịch sử', function () use ($cancelResponses, $closedHttp, $archivePage, $closedStatus, $uniqueName): void {
+    foreach ($cancelResponses as $response) {
+        expect($response['status'] === 303, 'Gỡ phân công trước khi đóng không dùng PRG');
+    }
+    expect($closedHttp['status'] === 303 && $closedStatus === 'closed', 'Không đóng được hoạt động khi yêu cầu đã unfilled');
+    expect(str_contains($archivePage['body'], $uniqueName) && str_contains($archivePage['body'], 'Đã đóng'), 'Hoạt động đóng không còn trong kho điều phối');
 });
 
 checkStep('Dọn đúng dữ liệu tạm do HTTP test tạo', function () use ($setupDb, $createdId): void {

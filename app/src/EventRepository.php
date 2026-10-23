@@ -37,6 +37,19 @@ final class EventRepository
         return $statement->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
+    public function allForCoordinator(int $limit = 200): array
+    {
+        $statement = $this->db->prepare(
+            "SELECT e.*,
+                    (SELECT COUNT(*) FROM shifts s WHERE s.event_id = e.id) AS shift_count,
+                    (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'registered') AS registration_count
+             FROM events e ORDER BY (e.status = 'published') DESC, e.start_at DESC, e.id DESC LIMIT ?"
+        );
+        $statement->bind_param('i', $limit);
+        $statement->execute();
+        return $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
     public function find(int $id): ?array
     {
         $statement = $this->db->prepare('SELECT * FROM events WHERE id = ? LIMIT 1');

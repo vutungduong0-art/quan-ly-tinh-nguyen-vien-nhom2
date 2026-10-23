@@ -1,5 +1,21 @@
 # Kết quả kiểm thử
 
+## Phiên 23/10/2026 17:22 UTC — workflow vận hành và kiểm thử bổ sung 0.4.0-demo
+
+Môi trường test: PHP 8.5.4; MySQL 8.4.11 tạm tại `127.0.0.1:33307`; schema có guard `volunteer_test`. Không chạy test ghi dữ liệu trên `volunteer_app`.
+
+| Lệnh/nhóm | Kết quả thực tế | Mã thoát |
+| --- | --- | --- |
+| PHP lint toàn bộ `app/**/*.php`, `bash -n app/lab.sh`, `git diff --check` | Sạch | 0 |
+| `php app/tests/run.php` | 21 đạt, 0 lỗi | 0 |
+| `php app/tools/validate_fixtures.php` | 3 fixture đạt | 0 |
+| Migration/seed schema sạch | Áp dụng 001–004; seed thành công | 0 |
+| `bash app/lab.sh extend` | 21 unit + 3 fixture + 13 integration + event/shift + I04 + I05 + workflow mở rộng đạt | 0 |
+| `bash app/lab.sh http-test` | 39 đạt, 0 lỗi; dữ liệu HTTP tự dọn | 0 |
+| `php app/tools/check.php` với cấu hình DB thật | Kiểm tra mã đạt; kết nối MySQL thật thất bại trong phiên IDE | 1, chưa đạt môi trường |
+
+Workflow mới kiểm chứng: rollback chuyển người không hợp lệ; chặn phân lại người đã vắng; `unfilled`/mở lại/kết thúc lại và chặn mở sau khi đóng; cặp baseline/cải tiến chung dataset/group không đổi lịch công bố; lưu phiên bản mã; báo cáo từng ca; lịch sử và audit. HTTP đi thật qua lưu hồ sơ/kỹ năng/lịch rảnh, role của action mới, A/B, chuyển người, unfilled/mở lại, CSV mở rộng và kho hoạt động.
+
 ## Phiên 23/10/2026 16:41 UTC — tám cải tiến
 
 Môi trường test: PHP 8.5.4 với `mysqli`/`mysqlnd`; MySQL 8.4.11 cô lập tại `127.0.0.1:33307`; schema bắt buộc `volunteer_test`. Cấu hình tạm và data directory nằm trong `app/.local/`, không được theo dõi/đóng gói và được dọn sau khi kiểm tra.

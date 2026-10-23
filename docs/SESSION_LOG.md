@@ -40,3 +40,23 @@
 - Dựng MySQL cô lập cục bộ với `volunteer_test` để xác minh: 20 unit, 3 fixture, 11 integration, quản lý hoạt động/ca, stale và concurrency đạt; HTTP 28/28 đạt; lint sạch; migration/seed chạy lại không nhân dữ liệu.
 - Xác nhận workspace hiện có repository thật trên nhánh `lab05`; thêm MIT `LICENSE`, `VERSION` và công cụ tạo tar.gz/checksum chỉ từ Git `HEAD`. Không push và không tạo issue/review/đóng góp giả.
 - Tạo gói từ commit `4a1fe90`, xác minh checksum và không có `.git`, `.local`, `release`; giải nén vào thư mục sạch, chạy migration 001–003, seed, `extend` và HTTP 28/28 trên schema `volunteer_release_test`. Sau đó xóa đúng schema/thư mục/cấu hình tạm.
+
+## 2026-10-23 — Bổ sung vận hành và đối chứng mốc 0.4.0-demo
+
+- Đọc trực tiếp `Đề tài 6.docx`, đối chiếu với kế hoạch và mã; xác nhận đề DOCX không có yêu cầu ẩn ngoài Phụ lục A nhưng còn một số khoảng trống thực thi.
+- Thêm migration 004 cho ghi chú kết thúc yêu cầu thay người, nhóm đối chứng và phiên bản mã; không sửa migration cũ và không chạm schema `volunteer_app`.
+- Snapshot nay mang lịch sử ca đã báo vắng; `EligibilityChecker` dùng dữ liệu đó ở thuật toán, thao tác tay, thay/chuyển người và công bố.
+- Bổ sung chuyển phân công nguyên tử; kết thúc yêu cầu ở `unfilled`, mở lại, lịch sử phân công/thay người và kho hoạt động đã đóng.
+- Thêm chạy baseline/cải tiến cùng snapshot trong một nhóm; lưu dataset/hash/config/phiên bản mã và hiển thị bảng so sánh cặp hợp lệ.
+- Thêm dashboard vận hành, báo cáo từng ca và hai CSV: danh sách phân công có mã/liên hệ/kỹ năng/giờ Việt Nam, tình trạng ca có số thiếu và thay người.
+- Bỏ giới hạn hiển thị 10 tình nguyện viên chưa được xếp; giữ toàn bộ lý do trong lịch sử run.
+- Dựng MySQL 8.4.11 tạm trên cổng 33307/schema `volunteer_test`, áp dụng migration 001–004, seed và kiểm tra. Kết quả: 21 unit, 3 fixture, 13 integration, quản lý event/shift, stale, concurrency, workflow mở rộng và HTTP 28/28 đều đạt; lint/diff check sạch.
+- MySQL thật cổng 3307 không kết nối được trong phiên nên chưa áp dụng migration 004. MySQL tạm và cấu hình test tạm được dọn; không reset/xóa DB thật.
+- Tăng `VERSION` thành `0.4.0-demo`; chưa commit, tag, push hoặc tạo gói release mới.
+
+## 2026-10-23 — Bổ sung kiểm thử hồi quy cho 0.4.0-demo
+
+- Mở rộng `workflow_extensions.php`: chuyển cho người chưa đăng ký phải rollback cả nguồn/đích; `unfilled` lưu metadata, mở lại xóa metadata, kết thúc lại được; hoạt động đóng không cho mở lại; A/B là `experiment`, dùng cùng dataset và không đổi lịch công bố; lịch sử/audit được kiểm tra.
+- Kiểm thử làm lộ lỗi ngữ nghĩa audit `replacement.reopened` dùng ID yêu cầu dưới loại `assignment`; đã sửa để ghi ID phân công gốc và lưu `request_id` trong JSON chi tiết.
+- Mở rộng `http_smoke.php` từ 28 lên 39 bước: thật sự POST lưu hồ sơ/kỹ năng/thêm-xóa lịch rảnh; chặn vai trò với action A/B và CSV ca; chạy cặp đối chứng; chuyển phân công; chặn phân lại người vắng; unfilled/mở lại; CSV phân công/tình trạng ca; đóng và tìm hoạt động trong kho lịch sử.
+- Chạy trên MySQL 8.4.11 tạm cổng 33307/schema `volunteer_test`: `extend` đạt toàn bộ và HTTP 39/39 đạt. Dữ liệu HTTP tự dọn; server/config test tạm được dọn sau phiên.

@@ -24,6 +24,8 @@ if (!is_file($fixture)) {
 }
 $snapshot = json_decode((string) file_get_contents($fixture), true, 512, JSON_THROW_ON_ERROR);
 $report = (new ComparisonService())->compare($snapshot);
+$versionPath = dirname(__DIR__, 2) . '/VERSION';
+$report['project_version'] = is_file($versionPath) ? trim((string) file_get_contents($versionPath)) : 'unknown';
 $targetDirectory = dirname(__DIR__, 2) . '/artifacts/comparison';
 if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0775, true) && !is_dir($targetDirectory)) {
     throw new RuntimeException('Không thể tạo thư mục artifacts/comparison.');

@@ -26,6 +26,10 @@ final class EligibilityChecker
             $reasons[] = 'Lịch rảnh không bao phủ toàn bộ ca';
         }
 
+        if (in_array((int) $shift['id'], array_map('intval', $volunteer['absent_shift_ids'] ?? []), true)) {
+            $reasons[] = 'Đã báo vắng ca này';
+        }
+
         foreach (array_merge($volunteer['busy_assignments'] ?? [], $schedule) as $assignment) {
             if ((int) ($assignment['volunteer_id'] ?? 0) !== (int) $volunteer['id']) {
                 continue;

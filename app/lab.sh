@@ -49,6 +49,7 @@ case "${1:-}" in
     APP_ENV=test APP_DB_CONFIG="$test_config" php tests/event_management.php
     APP_ENV=test APP_DB_CONFIG="$test_config" php tests/stale_plan.php
     APP_ENV=test APP_DB_CONFIG="$test_config" php tests/concurrency.php
+    APP_ENV=test APP_DB_CONFIG="$test_config" php tests/workflow_extensions.php
     ;;
   db-info)
     php tools/db_info.php

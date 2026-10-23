@@ -452,7 +452,7 @@
         "timezone": "Asia/Ho_Chi_Minh",
         "version": "1.0.0"
     },
-    "generated_at": "2026-10-23T11:34:24+00:00",
+    "generated_at": "2026-10-23T17:15:27+00:00",
     "improved": {
         "algorithm": "scarcity_balanced",
         "algorithm_version": "1.0.0",
@@ -765,5 +765,6 @@
             "violations": []
         }
     },
+    "project_version": "0.4.0-demo",
     "snapshot_sha256": "d3c3faa267ad613b7ffd866d3ca2f8d09a013e2ee11b0fc0c32ee7f69ca1ea82"
 }

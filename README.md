@@ -2,7 +2,7 @@
 
 VolunteerHub là bản triển khai Đề tài 6 bằng PHP, MySQLi, MySQL Server, HTML, CSS và JavaScript thuần. Dự án đã đi tiếp từ checkpoint demo ban đầu: các chức năng nghiệp vụ F01–F05, hai thuật toán phân công, snapshot/revision, báo vắng–thay người, thống kê và CSV đều đã nối với dữ liệu MySQL thật.
 
-Mốc `0.3.0-demo` bổ sung tám cải tiến: sửa/đóng hoạt động; sửa/xóa ca an toàn; cơ sở dữ liệu test tách biệt; tài khoản web quyền tối thiểu; HTML không lồng biểu mẫu; Git/giấy phép/gói phát hành; tách xử lý POST khỏi front controller; và gia cố đăng nhập/session/CSRF/header bảo mật. Issue, review và bảng đóng góp thành viên vẫn phải dùng bằng chứng thật của nhóm, không được tạo giả.
+Mốc `0.4.0-demo` bổ sung lớp vận hành còn thiếu sau khi đối chiếu đề bài: chuyển phân công nguyên tử, kết thúc/mở lại yêu cầu không tìm được người thay, chặn phân lại người đã báo vắng, báo cáo từng ca, cặp đối chứng dùng cùng snapshot/hash, CSV đầy đủ hơn và kho/lịch sử hoạt động. Issue, review và bảng đóng góp thành viên vẫn phải dùng bằng chứng thật của nhóm, không được tạo giả.
 
 ## 1. Chức năng hiện có
 
@@ -14,8 +14,9 @@ Mốc `0.3.0-demo` bổ sung tám cải tiến: sửa/đóng hoạt động; s�
 - Thuật toán đối chứng theo thứ tự đăng ký và thuật toán cải tiến ưu tiên ca khan hiếm/cân bằng tải.
 - Lưu snapshot JSON, SHA-256, phiên bản thuật toán, cấu hình, chỉ số và danh sách chưa bố trí.
 - Phương án nháp, `schedule_revision`, từ chối phương án cũ và công bố trong giao dịch.
-- Phân công thủ công, gỡ phân công, xác nhận, báo vắng, hàng đợi thay người và nhật ký audit.
-- Thống kê hoạt động/lần chạy; xuất CSV UTF-8 và vô hiệu hóa tiền tố công thức bảng tính.
+- Phân công thủ công, chuyển/gỡ phân công, xác nhận, báo vắng, thay người hoặc ghi nhận chưa tìm được người; mọi đường đều dùng transaction, kiểm tra máy chủ và nhật ký audit.
+- Thống kê hoạt động, tình trạng từng ca và cặp A/B cùng snapshot; kho/lịch sử dữ liệu đã đóng; xuất CSV UTF-8 có mã/liên hệ/kỹ năng/giờ Việt Nam và vô hiệu hóa tiền tố công thức bảng tính.
+- Người đã báo vắng không thể bị thuật toán, thao tác tay hoặc luồng thay người đưa trở lại chính ca đó.
 - Ba fixture `DU_NGUOI_V1`, `THIEU_NGUOI_V1`, `TRUNG_LICH_V1`, mỗi bộ đúng 30 người/12 ca/5 kỹ năng.
 - Session chặt chẽ, khóa tạm sau nhiều lần đăng nhập sai, `password_hash`/`password_verify`, CSRF, role/ownership server-side, security headers, prepared statements, escaping HTML, khóa ngoại/unique/CHECK.
 - Migration có checksum chống sửa lịch sử; kiểm thử ghi dữ liệu chỉ được chạy trên schema có hậu tố `_test`.
@@ -319,6 +320,7 @@ Kết quả lần đầu phải có ba migration:
 Đã áp dụng 001_demo_core.sql.
 Đã áp dụng 002_full_project.sql.
 Đã áp dụng 003_hardening.sql.
+Đã áp dụng 004_workflow_reporting.sql.
 Migration hoàn tất.
 ```
 
@@ -365,7 +367,9 @@ bash lab.sh compare
 bash lab.sh extend
 ```
 
-`extend` chạy 20 unit, kiểm định 3 fixture, 11 integration, kiểm tra quản lý hoạt động/ca, phương án stale I04 và hai tiến trình tranh chỗ I05.
+`extend` chạy 21 unit, kiểm định 3 fixture, 13 integration, kiểm tra quản lý hoạt động/ca, phương án stale I04, hai tiến trình tranh chỗ I05 và workflow mở rộng.
+
+`http-test` chạy 39 bước end-to-end, gồm cả hồ sơ/lịch rảnh, A/B cùng snapshot, chuyển người, `unfilled`/mở lại, chặn phân lại người vắng, phân quyền CSV, CSV mở rộng và kho hoạt động. Cả hai lệnh chỉ dùng schema hậu tố `_test`.
 
 ## 10. Chạy website
 
@@ -674,7 +678,7 @@ app/
 ├── src/Http/ActionController.php Xử lý và phân quyền các POST action
 ├── src/Allocation/               Snapshot, validator và hai thuật toán
 ├── src/                           Xác thực và repository nghiệp vụ
-├── database/migrations/           Migration cộng dồn 001–003 có checksum
+├── database/migrations/           Migration cộng dồn 001–004 có checksum
 ├── database/fixtures/generated/   Ba fixture chuẩn có hash
 ├── tools/                         Configure, migrate, seed, compare
 ├── tests/                         Unit, integration, HTTP, stale, concurrency

@@ -40,3 +40,8 @@ Guard của test sẽ từ chối chạy nếu cấu hình trỏ nhầm `volunte
 ## Giới hạn thuật toán đã biết
 
 Thuật toán cải tiến là heuristic tham lam kèm sửa cục bộ tối đa 100 lượt, xác định nhưng không bảo đảm tối ưu toàn cục. Mọi kết quả vẫn được validator độc lập kiểm tra trước khi lưu/công bố.
+
+## Phần bàn giao 0.4.0 chưa tự động hóa
+
+- Chưa tạo tag/gói release `0.4.0-demo`; cây làm việc hiện còn thay đổi để người dùng xem trước và commit sau khi chấp nhận.
+- `comparison_group` bảo đảm hai thuật toán dùng cùng snapshot trong ứng dụng; công cụ fixture vẫn sinh artifact độc lập và ghi phiên bản mã, không ghi commit Git khi cây làm việc chưa commit.

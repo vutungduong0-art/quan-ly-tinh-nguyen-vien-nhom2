@@ -1,16 +1,15 @@
 # Trạng thái dự án
 
-- Cập nhật lúc: 2026-10-23 16:45 UTC.
-- Git: nhánh `lab05`, commit triển khai `4a1fe90`, remote `origin` do người dùng cấu hình. Mốc bàn giao được nhận diện bằng tag cục bộ `v0.3.0-demo`; không tự push.
-- Giai đoạn: đã triển khai G00–G10 và chuẩn bị G11. Đây vẫn là bản demo học phần, không phải hệ thống production.
-- Chức năng: F01–F05, hai thuật toán, snapshot/hash/revision, chỉnh tay, xác nhận, vắng/thay, thống kê, CSV và audit đều đã nối MySQL.
-- Tám cải tiến mới: sửa/đóng hoạt động; sửa/xóa ca có bảo vệ; schema test tách biệt; kiểm tra quyền MySQL tối thiểu; sửa form lồng nhau; MIT/VERSION/đóng gói release; tách POST sang `ActionController`; gia cố đăng nhập/session/security headers.
-- Migration: `001_demo_core.sql`, `002_full_project.sql`, `003_hardening.sql`; `schema_migrations` lưu SHA-256 và từ chối migration cũ bị sửa.
-- MySQL ứng dụng đã xác minh: host `Lynn`, port `3307`, schema `volunteer_app`, server UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`, MySQL `8.4.11`. Không xóa/reset schema này.
-- Kiểm thử ghi dữ liệu chỉ chạy với cấu hình `app/.local/test-db.json`; guard từ chối `volunteer_app` và schema không có hậu tố `_test`. HTTP test tự mở server test cổng 18106.
-- Kết quả gần nhất trên MySQL cô lập/schema `volunteer_test`: 20 unit, 3 fixture, 11 integration, quản lý hoạt động/ca, I04 stale và I05 concurrency đều đạt; HTTP 28/28 đạt; PHP lint sạch; migration/seed chạy lại idempotent.
-- Release candidate tạo từ commit `4a1fe90` đã được giải nén/cài trên schema sạch `volunteer_release_test`; migration 001–003, seed, `extend` và HTTP 28/28 đều đạt. Gói cuối có SHA-256 trong tệp `.sha256` đi kèm.
-- Kết quả kiểm tra server thật: mã/migration/PHP đạt; kết nối đúng server/schema; kiểm tra chủ động thất bại vì `app/.local/db.json` vẫn dùng tài khoản có `ALL PRIVILEGES`. Đây là lỗi cấu hình môi trường còn mở, không phải PASS.
-- Cấu hình bí mật: `app/.local/db.json`, `migration-db.json`, `test-db.json`; đều bị ignore và không thuộc gói release.
-- Việc còn cần thao tác quản trị: tạo/cấp đúng quyền cho `volunteer_app@localhost`, tạo `volunteer_test`, chạy `configure.php app|test`, rồi chạy lại `check`, `test-prepare`, `extend`, `http-test` trên MySQL cổng 3307.
-- Việc còn cần bằng chứng con người: issue/review và bảng đóng góp thành viên thật; không tạo giả.
+- Cập nhật lúc: 2026-10-23 17:22 UTC.
+- Nhánh và commit: `lab05`, HEAD `3bcad54`; đang có thay đổi 0.4.0-demo chưa commit. Tệp `Đề tài 6.docx` của người dùng vẫn untracked và không bị sửa.
+- Giai đoạn hiện tại: đã triển khai G00–G10 và chuẩn bị bàn giao G11. Đây là demo học phần, không phải production.
+- Phạm vi phiên: hoàn thiện các thiếu sót nghiệp vụ 0.4.0-demo và bổ sung kiểm thử hồi quy/HTTP cho toàn bộ luồng mới.
+- Đã hoàn thành: chặn phân lại người đã báo vắng; chuyển phân công nguyên tử; trạng thái thay người `unfilled` và mở lại; báo cáo trực tiếp từng ca; cặp A/B cùng snapshot/hash/config/phiên bản mã; CSV phân công/tình trạng ca; kho hoạt động và lịch sử phân công/thay người/ca cá nhân.
+- Migration: `001_demo_core.sql` đến `004_workflow_reporting.sql`; migration 004 thêm ghi chú xử lý thay người, nhóm đối chứng và phiên bản mã nguồn. Không reset/xóa `volunteer_app`.
+- Kiểm thử gần nhất: MySQL 8.4.11 tạm tại `127.0.0.1:33307`, schema `volunteer_test`; 21 unit, 3 fixture, 13 integration, event/shift, I04 stale, I05 concurrency, workflow mở rộng và HTTP 39/39 đều đạt; PHP lint và `git diff --check` sạch.
+- Kiểm thử workflow mới xác nhận: rollback chuyển người sai; người vắng bị chặn phân lại; `unfilled` có thể mở/kết thúc lại nhưng không mở sau khi đóng hoạt động; cặp A/B không đổi lịch công bố; lịch sử/audit đầy đủ. HTTP đi thật qua hồ sơ/lịch rảnh, đối chứng, chuyển người, unfilled/mở lại, hai CSV và kho hoạt động.
+- Cấu hình ứng dụng thực vẫn ở `app/.local/db.json`; bí mật bị ignore. Cấu hình/test server tạm đã được dọn sau kiểm thử.
+- MySQL ứng dụng đã biết: `127.0.0.1:3307`, schema `volunteer_app`; phiên IDE hiện không kết nối được nên migration 004 chưa được áp dụng lên DB thật.
+- Lỗi/công việc ngoài mã: tài khoản web trên server thật trước đó còn `ALL PRIVILEGES`; cần đổi sang quyền tối thiểu. Workbench/UUID, issue/review và bảng đóng góp thành viên cần bằng chứng thao tác thật của người dùng/nhóm.
+- Cách chạy sau khi cấu hình: `cd /home/lynn/project_6/app && bash lab.sh migrate && bash lab.sh seed && bash lab.sh check && bash lab.sh run`; website `http://127.0.0.1:8106`.
+- Next action: khi MySQL cổng 3307 hoạt động, áp dụng migration 004 bằng tài khoản migration, chạy `check`, rồi trình diễn ba tình huống trong `docs/DEMO_SCRIPT.md`.

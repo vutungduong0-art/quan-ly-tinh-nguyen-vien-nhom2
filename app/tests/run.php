@@ -150,6 +150,20 @@ test('Bộ kiểm tra phát hiện trùng lịch của cùng người', function
     assertTrueValue(str_contains(implode(' ', $result['reasons']), 'Trùng lịch'));
 });
 
+test('Người đã báo vắng không thể được phân lại vào chính ca đó', function (): void {
+    $checker = new EligibilityChecker();
+    $result = $checker->check([
+        'id' => 1, 'active' => true, 'skill_ids' => [], 'absent_shift_ids' => [7],
+        'availability' => [['start_at' => '2027-01-01 07:00:00', 'end_at' => '2027-01-01 12:00:00']],
+        'registrations' => [['event_id' => 1, 'status' => 'registered']],
+    ], [
+        'id' => 7, 'event_id' => 1, 'skill_ids' => [],
+        'start_at' => '2027-01-01 09:00:00', 'end_at' => '2027-01-01 11:00:00',
+    ]);
+    assertSameValue(false, $result['eligible']);
+    assertTrueValue(str_contains(implode(' ', $result['reasons']), 'Đã báo vắng'));
+});
+
 test('Validator phát hiện vượt số người cần', function (): void {
     $snapshot = [
         'shifts' => [['id' => 1, 'event_id' => 1, 'name' => 'Ca', 'start_at' => '2027-01-01 08:00:00', 'end_at' => '2027-01-01 10:00:00', 'required_count' => 1, 'skill_ids' => []]],

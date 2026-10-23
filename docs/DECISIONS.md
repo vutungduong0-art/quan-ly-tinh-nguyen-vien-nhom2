@@ -34,3 +34,12 @@
 - Migration đã áp dụng là bất biến; SHA-256 được lưu và so sánh ở các lần chạy sau.
 - `public/index.php` giữ vai trò điều phối/render; toàn bộ POST action, validation và redirect nằm trong `ActionController` để giảm front controller đơn khối.
 - Phiên bản demo là `0.3.0-demo`; gói bàn giao được tạo từ Git `HEAD`, không lấy file bí mật/không theo dõi trong working tree.
+
+## 2026-10-23 — Hoàn thiện vận hành và khả năng đối chứng 0.4.0-demo
+
+- Người đã báo `absent`/`replaced` ở một ca được lưu vào snapshot và bị loại khỏi mọi đường phân công lại cho chính ca đó.
+- Yêu cầu thay người có ba kết quả rõ: `open`, `resolved`, `unfilled`; `unfilled` lưu lý do, người xử lý, thời điểm và có thể mở lại khi phân công gốc vẫn vắng.
+- Chuyển phân công là một giao dịch nguyên tử: kiểm tra ứng viên trước, hủy nguồn và kích hoạt đích cùng khóa `schedule_guard`; lỗi ở bất kỳ bước nào sẽ rollback.
+- Một phép đối chứng hợp lệ tạo đồng thời baseline và cải tiến từ cùng một snapshot, dataset ID, hash và `comparison_group`; mỗi run lưu thêm phiên bản mã trong `VERSION`.
+- Báo cáo vận hành lấy một dòng cho từng ca, tách số cần/đã xếp/đã xác nhận/còn thiếu và trạng thái thay người. Kho hoạt động và lịch sử giữ dữ liệu đã đóng thay vì ẩn khỏi điều phối.
+- Phiên bản mã sau nhóm bổ sung là `0.4.0-demo`; chưa tạo tag hay gói release mới trong phiên này.
