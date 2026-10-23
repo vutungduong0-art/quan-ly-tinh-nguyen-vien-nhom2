@@ -43,3 +43,11 @@
 - Một phép đối chứng hợp lệ tạo đồng thời baseline và cải tiến từ cùng một snapshot, dataset ID, hash và `comparison_group`; mỗi run lưu thêm phiên bản mã trong `VERSION`.
 - Báo cáo vận hành lấy một dòng cho từng ca, tách số cần/đã xếp/đã xác nhận/còn thiếu và trạng thái thay người. Kho hoạt động và lịch sử giữ dữ liệu đã đóng thay vì ẩn khỏi điều phối.
 - Phiên bản mã sau nhóm bổ sung là `0.4.0-demo`; chưa tạo tag hay gói release mới trong phiên này.
+
+## 2026-10-23 — Đăng ký tài khoản và giao diện theo vai trò
+
+- Cho phép khách tự đăng ký nhưng tài khoản luôn được tạo với vai trò `volunteer`, trạng thái hoạt động; không nhận role từ biểu mẫu. Điều phối tiếp tục được tạo/quản lý nội bộ.
+- Tên đăng nhập và email là duy nhất; mật khẩu dài 8–128 ký tự, lưu bằng `password_hash` và xác thực bằng `password_verify`. Migration 005 thêm unique index cho email.
+- Điều phối thấy Tình nguyện viên, Phân công và Thống kê; tình nguyện viên thấy Hồ sơ và Ca của tôi. Việc ẩn menu chỉ là UX, mọi route/action nhạy cảm vẫn kiểm tra quyền ở máy chủ.
+- Hồ sơ do điều phối mở được render trong `dialog` modal, đóng bằng nút, `Esc` hoặc bấm ngoài; hồ sơ cá nhân của volunteer vẫn là trang đầy đủ.
+- Footer hiển thị tên hệ thống, đề tài, năm, múi giờ và phiên bản đọc từ tệp `VERSION`.

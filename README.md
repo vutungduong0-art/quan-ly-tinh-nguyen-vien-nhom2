@@ -6,9 +6,10 @@ Mốc `0.4.0-demo` bổ sung lớp vận hành còn thiếu sau khi đối chi�
 
 ## 1. Chức năng hiện có
 
-- Giao diện tiếng Việt màu xanh lá, responsive, dashboard đọc số liệu trực tiếp từ MySQL.
+- Giao diện tiếng Việt màu xanh lá, responsive, dùng Open Sans đóng gói cục bộ và dashboard đọc số liệu trực tiếp từ MySQL.
+- Khách có thể tự tạo tài khoản tình nguyện viên; mật khẩu được băm, email/tên đăng nhập là duy nhất và biểu mẫu không cho tự chọn quyền điều phối.
 - Quản lý thêm/sửa/đóng hoạt động và thêm/sửa/xóa ca an toàn; chặn thay đổi làm sai phân công đang hiệu lực; validation giờ và số người ở máy chủ.
-- Hồ sơ tình nguyện viên, kỹ năng, lịch rảnh; chặn xóa dữ liệu đang làm phân công mất hợp lệ.
+- Hồ sơ tình nguyện viên, kỹ năng, lịch rảnh; điều phối xem hồ sơ bằng modal, chặn xóa dữ liệu đang làm phân công mất hợp lệ.
 - Đăng ký, rút/tái đăng ký, lịch sử đăng ký và trang **Ca của tôi**.
 - Bộ `EligibilityChecker` dùng chung: tài khoản hoạt động, đăng ký, đủ toàn bộ kỹ năng, lịch rảnh phủ ca, không trùng lịch và không vượt chỗ.
 - Thuật toán đối chứng theo thứ tự đăng ký và thuật toán cải tiến ưu tiên ca khan hiếm/cân bằng tải.
@@ -20,6 +21,7 @@ Mốc `0.4.0-demo` bổ sung lớp vận hành còn thiếu sau khi đối chi�
 - Ba fixture `DU_NGUOI_V1`, `THIEU_NGUOI_V1`, `TRUNG_LICH_V1`, mỗi bộ đúng 30 người/12 ca/5 kỹ năng.
 - Session chặt chẽ, khóa tạm sau nhiều lần đăng nhập sai, `password_hash`/`password_verify`, CSRF, role/ownership server-side, security headers, prepared statements, escaping HTML, khóa ngoại/unique/CHECK.
 - Migration có checksum chống sửa lịch sử; kiểm thử ghi dữ liệu chỉ được chạy trên schema có hậu tố `_test`.
+- Menu theo vai trò: điều phối thấy Tình nguyện viên/Phân công/Thống kê; tình nguyện viên thấy Hồ sơ/Ca của tôi. Route và action vẫn kiểm tra quyền ở máy chủ.
 
 ## 2. Thông tin môi trường của dự án
 
@@ -314,13 +316,14 @@ Vẫn ở thư mục `/home/lynn/project_6/app`, chạy từng lệnh và kiểm
 bash lab.sh migrate
 ```
 
-Kết quả lần đầu phải có ba migration:
+Kết quả lần đầu phải có năm migration:
 
 ```text
 Đã áp dụng 001_demo_core.sql.
 Đã áp dụng 002_full_project.sql.
 Đã áp dụng 003_hardening.sql.
 Đã áp dụng 004_workflow_reporting.sql.
+Đã áp dụng 005_self_registration.sql.
 Migration hoàn tất.
 ```
 
@@ -356,7 +359,7 @@ bash lab.sh integration
 Kết quả hiện đã xác minh:
 
 ```text
-Kết quả integration: 11 đạt, 0 lỗi.
+Kết quả integration: 13 đạt, 0 lỗi.
 ```
 
 Chạy toàn bộ nghiệp vụ không cần HTTP server:
@@ -369,7 +372,7 @@ bash lab.sh extend
 
 `extend` chạy 21 unit, kiểm định 3 fixture, 13 integration, kiểm tra quản lý hoạt động/ca, phương án stale I04, hai tiến trình tranh chỗ I05 và workflow mở rộng.
 
-`http-test` chạy 39 bước end-to-end, gồm cả hồ sơ/lịch rảnh, A/B cùng snapshot, chuyển người, `unfilled`/mở lại, chặn phân lại người vắng, phân quyền CSV, CSV mở rộng và kho hoạt động. Cả hai lệnh chỉ dùng schema hậu tố `_test`.
+`http-test` chạy 45 bước end-to-end, gồm đăng ký tài khoản, mật khẩu băm, email duy nhất, menu theo vai trò, modal hồ sơ, footer phiên bản, hồ sơ/lịch rảnh, A/B cùng snapshot, chuyển người, `unfilled`/mở lại, chặn phân lại người vắng, phân quyền CSV, CSV mở rộng và kho hoạt động. Cả hai lệnh chỉ dùng schema hậu tố `_test`.
 
 ## 10. Chạy website
 
@@ -396,16 +399,18 @@ Seed có tổng cộng 30 tài khoản tình nguyện viên. Các tài khoản t
 
 Các mật khẩu trên chỉ dành cho dữ liệu demo cục bộ.
 
+Khách cũng có thể chọn **Đăng ký** trên thanh điều hướng để tạo tài khoản mới. Tài khoản tự đăng ký luôn là `volunteer`; quyền `coordinator` không xuất hiện trong biểu mẫu và không được nhận từ dữ liệu phía trình duyệt.
+
 ## 11. Kịch bản kiểm tra nhanh
 
-1. Đăng nhập `dieuphoi`, tạo hoạt động và các ca có kỹ năng/nhu cầu.
-2. Đăng nhập `tinhnguyen`, mở **Tình nguyện viên** để kiểm tra kỹ năng/lịch rảnh rồi đăng ký hoạt động.
-3. Đăng nhập lại `dieuphoi`, mở **Phân công**, chọn hoạt động và chạy **Cải tiến — ưu tiên khan hiếm & cân bằng**.
-4. Mở phần giải thích ca thiếu/người 0 ca, sau đó công bố phương án.
-5. Đăng nhập `tinhnguyen`, mở **Ca của tôi**, xác nhận rồi báo vắng một ca.
-6. Đăng nhập `dieuphoi`, mở hàng đợi thay người, thử một người không hợp lệ rồi chọn người hợp lệ.
-7. Mở **Thống kê**, đối chiếu chỉ số và xuất CSV.
-8. Chạy `bash lab.sh compare` để trình bày sáu kết quả trên cùng ba snapshot chuẩn.
+1. Thử tạo một tài khoản tình nguyện viên tại **Đăng ký**, sau đó đăng nhập bằng tài khoản vừa tạo.
+2. Đăng nhập `dieuphoi`, tạo hoạt động và các ca có kỹ năng/nhu cầu; mở **Tình nguyện viên** và xem một hồ sơ trong modal.
+3. Đăng nhập `tinhnguyen`, mở **Hồ sơ** để kiểm tra kỹ năng/lịch rảnh rồi đăng ký hoạt động.
+4. Đăng nhập lại `dieuphoi`, mở **Phân công**, chọn hoạt động và chạy **Cải tiến — ưu tiên khan hiếm & cân bằng**.
+5. Mở phần giải thích ca thiếu/người 0 ca, sau đó công bố phương án.
+6. Đăng nhập `tinhnguyen`, mở **Ca của tôi**, xác nhận rồi báo vắng một ca.
+7. Đăng nhập `dieuphoi`, mở hàng đợi thay người, thử một người không hợp lệ rồi chọn người hợp lệ.
+8. Mở **Thống kê**, đối chiếu chỉ số và xuất CSV; chạy `bash lab.sh compare` để trình bày sáu kết quả trên ba snapshot chuẩn.
 
 Kịch bản trình diễn đầy đủ hơn nằm tại `docs/DEMO_SCRIPT.md`.
 
@@ -678,7 +683,7 @@ app/
 ├── src/Http/ActionController.php Xử lý và phân quyền các POST action
 ├── src/Allocation/               Snapshot, validator và hai thuật toán
 ├── src/                           Xác thực và repository nghiệp vụ
-├── database/migrations/           Migration cộng dồn 001–004 có checksum
+├── database/migrations/           Migration cộng dồn 001–005 có checksum
 ├── database/fixtures/generated/   Ba fixture chuẩn có hash
 ├── tools/                         Configure, migrate, seed, compare
 ├── tests/                         Unit, integration, HTTP, stale, concurrency

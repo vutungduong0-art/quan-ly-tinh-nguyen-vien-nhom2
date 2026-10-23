@@ -1,5 +1,25 @@
 # Kết quả kiểm thử
 
+## Phiên 23/10/2026 18:45 UTC — Open Sans cục bộ
+
+- Hai variable TTF tải từ nguồn chính thức được `file` nhận đúng là TrueType có chữ ký và metadata Open Sans; bản normal 532.636 byte, italic 583.992 byte.
+- Server demo trả HTTP 200, `Content-Type: font/ttf` và đúng `Content-Length` cho cả hai tệp. CSS đang chạy chứa hai `@font-face`; không còn khai báo Inter hoặc Georgia trong giao diện.
+- Giấy phép OFL được giữ tại `app/public/assets/fonts/open-sans/OFL.txt` và nguồn được ghi trong `THIRD_PARTY_NOTICES.md`/`SOURCE_PROVENANCE.md`.
+
+## Phiên 23/10/2026 18:38 UTC — đăng ký tài khoản và giao diện theo vai trò
+
+Môi trường test: PHP 8.5.4; MySQL 8.4.11 tạm tại `127.0.0.1:33307`; schema guard `volunteer_test`. Migration 005 cũng đã được áp dụng cộng dồn lên `volunteer_app` sau khi xác nhận không có email trùng; không reset dữ liệu.
+
+| Lệnh/nhóm | Kết quả thực tế | Mã thoát |
+| --- | --- | --- |
+| PHP lint toàn bộ `app/**/*.php`, Bash lint, `git diff --check` | Sạch; máy không cài Node nên không chạy `node --check` | 0 cho các kiểm tra đã chạy |
+| `php app/tests/run.php` | 21 đạt, 0 lỗi | 0 |
+| `bash app/lab.sh test-prepare` | Áp dụng migration 001–005 và seed trên schema sạch | 0 |
+| `bash app/lab.sh extend` | 21 unit + 3 fixture + 13 integration + event/shift + I04 + I05 + workflow mở rộng đạt | 0 |
+| `bash app/lab.sh http-test` | 45 đạt, 0 lỗi; dữ liệu HTTP tự dọn | 0 |
+
+HTTP mới xác nhận: validation đăng ký; role luôn là volunteer; mật khẩu `password_hash`/`password_verify`; sinh hồ sơ/mã TNV; email trùng bị unique chặn; menu khách/volunteer/coordinator đúng phạm vi; assignments/stats vẫn trả 403; hồ sơ điều phối nằm trong `dialog` không có form lồng; footer lấy đúng phiên bản.
+
 ## Phiên 23/10/2026 17:22 UTC — workflow vận hành và kiểm thử bổ sung 0.4.0-demo
 
 Môi trường test: PHP 8.5.4; MySQL 8.4.11 tạm tại `127.0.0.1:33307`; schema có guard `volunteer_test`. Không chạy test ghi dữ liệu trên `volunteer_app`.

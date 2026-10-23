@@ -63,9 +63,16 @@ final class VolunteerRepository
                 'INSERT INTO volunteer_profiles (user_id, volunteer_code, phone, email, notes) VALUES (?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE volunteer_code = VALUES(volunteer_code), phone = VALUES(phone), email = VALUES(email), notes = VALUES(notes)'
             );
-            $profile->bind_param('issss', $userId, $data['volunteer_code'], $data['phone'], $data['email'], $data['notes']);
+            $email = $data['email'] === '' ? null : $data['email'];
+            $profile->bind_param('issss', $userId, $data['volunteer_code'], $data['phone'], $email, $data['notes']);
             $profile->execute();
             $this->db->commit();
+        } catch (mysqli_sql_exception $exception) {
+            $this->db->rollback();
+            if ($exception->getCode() === 1062) {
+                throw new DomainException('Mã tình nguyện viên hoặc email đã được sử dụng.');
+            }
+            throw $exception;
         } catch (Throwable $exception) {
             $this->db->rollback();
             throw $exception;

@@ -80,6 +80,16 @@ function route_url(string $page = 'dashboard', array $params = []): string
     return '/?' . http_build_query(['page' => $page] + $params);
 }
 
+function app_version(): string
+{
+    static $version;
+    if (!is_string($version)) {
+        $path = dirname(__DIR__, 2) . '/VERSION';
+        $version = is_file($path) ? trim((string) file_get_contents($path)) : 'development';
+    }
+    return $version;
+}
+
 function redirect_to(string $page, array $params = []): never
 {
     header('Location: ' . route_url($page, $params), true, 303);

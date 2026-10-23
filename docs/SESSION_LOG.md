@@ -60,3 +60,17 @@
 - Kiểm thử làm lộ lỗi ngữ nghĩa audit `replacement.reopened` dùng ID yêu cầu dưới loại `assignment`; đã sửa để ghi ID phân công gốc và lưu `request_id` trong JSON chi tiết.
 - Mở rộng `http_smoke.php` từ 28 lên 39 bước: thật sự POST lưu hồ sơ/kỹ năng/thêm-xóa lịch rảnh; chặn vai trò với action A/B và CSV ca; chạy cặp đối chứng; chuyển phân công; chặn phân lại người vắng; unfilled/mở lại; CSV phân công/tình trạng ca; đóng và tìm hoạt động trong kho lịch sử.
 - Chạy trên MySQL 8.4.11 tạm cổng 33307/schema `volunteer_test`: `extend` đạt toàn bộ và HTTP 39/39 đạt. Dữ liệu HTTP tự dọn; server/config test tạm được dọn sau phiên.
+
+## 2026-10-23 — Đăng ký tài khoản, menu theo vai trò, modal và footer
+
+- Bổ sung trang/action tự đăng ký: validation máy chủ, role cố định `volunteer`, `password_hash`, hồ sơ/mã TNV tạo trong cùng transaction và unique email qua migration 005.
+- Thanh điều hướng nay chỉ hiện Phân công/Thống kê cho điều phối; volunteer thấy Hồ sơ/Ca của tôi; route và POST action tiếp tục trả 403 ở máy chủ khi sai vai trò.
+- Chuyển hồ sơ điều phối mở từ phần bên dưới bảng sang modal native `dialog`, hỗ trợ nút đóng, Escape, backdrop và bố cục gần toàn màn hình trên thiết bị nhỏ.
+- Nâng footer với tên đầy đủ, năm, múi giờ và phiên bản đọc từ `VERSION`; giữ bố cục footer ở cuối màn hình khi trang ngắn.
+- Áp dụng migration 005 cộng dồn lên `volunteer_app`, không reset/xóa dữ liệu. Chạy MySQL 8.4.11 tạm cổng 33307/schema `volunteer_test`: 21 unit, 3 fixture, 13 integration, event/shift, stale, concurrency, workflow mở rộng đều đạt; HTTP tăng lên 45/45 và dữ liệu tạm tự dọn.
+
+## 2026-10-23 — Chuẩn hóa toàn bộ font sang Open Sans
+
+- Đóng gói Open Sans variable normal/italic từ kho Google Fonts trong `public/assets/fonts/open-sans`, kèm nguyên văn giấy phép SIL OFL 1.1; không dùng CDN.
+- Thêm hai khai báo `@font-face` weight 300–800 và đổi body, tiêu đề, số liệu, ngày cùng trạng thái rỗng từ Inter/Georgia sang Open Sans; input/button tiếp tục kế thừa font chung.
+- Xác minh hai TTF hợp lệ, có bộ ký tự tiếng Việt và được server `127.0.0.1:8106` trả HTTP 200 với `Content-Type: font/ttf`; CSP `default-src 'self'` cho phép tải font cùng origin.

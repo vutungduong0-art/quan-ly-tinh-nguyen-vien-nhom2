@@ -48,6 +48,44 @@ final class Auth
         return true;
     }
 
+    public function registerVolunteer(array $data): int
+    {
+        $this->db->begin_transaction();
+        try {
+            $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
+            if (!is_string($passwordHash)) {
+                throw new RuntimeException('Không thể bảo vệ mật khẩu tài khoản.');
+            }
+
+            $role = 'volunteer';
+            $user = $this->db->prepare(
+                'INSERT INTO users (username, password_hash, full_name, role, active) VALUES (?, ?, ?, ?, 1)'
+            );
+            $user->bind_param('ssss', $data['username'], $passwordHash, $data['full_name'], $role);
+            $user->execute();
+            $userId = (int) $this->db->insert_id;
+
+            $volunteerCode = 'TNV' . str_pad((string) $userId, 5, '0', STR_PAD_LEFT);
+            $profile = $this->db->prepare(
+                'INSERT INTO volunteer_profiles (user_id, volunteer_code, email) VALUES (?, ?, ?)'
+            );
+            $profile->bind_param('iss', $userId, $volunteerCode, $data['email']);
+            $profile->execute();
+
+            $this->db->commit();
+            return $userId;
+        } catch (mysqli_sql_exception $exception) {
+            $this->db->rollback();
+            if ($exception->getCode() === 1062) {
+                throw new DomainException('Tên đăng nhập hoặc email đã được sử dụng.');
+            }
+            throw $exception;
+        } catch (Throwable $exception) {
+            $this->db->rollback();
+            throw $exception;
+        }
+    }
+
     public function user(): ?array
     {
         $user = $_SESSION['user'] ?? null;

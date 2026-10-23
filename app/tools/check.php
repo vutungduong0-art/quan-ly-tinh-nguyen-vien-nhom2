@@ -10,6 +10,8 @@ $requirements = [
     'Migration nền' => is_file(dirname(__DIR__) . '/database/migrations/001_demo_core.sql'),
     'Migration toàn dự án' => is_file(dirname(__DIR__) . '/database/migrations/002_full_project.sql'),
     'Migration gia cố' => is_file(dirname(__DIR__) . '/database/migrations/003_hardening.sql'),
+    'Migration vận hành 0.4' => is_file(dirname(__DIR__) . '/database/migrations/004_workflow_reporting.sql'),
+    'Migration đăng ký tài khoản' => is_file(dirname(__DIR__) . '/database/migrations/005_self_registration.sql'),
     'Hai thuật toán phân công' => is_file(dirname(__DIR__) . '/src/Allocation/RegistrationOrderAllocator.php')
         && is_file(dirname(__DIR__) . '/src/Allocation/ScarcityBalancedAllocator.php'),
     'Ba fixture chuẩn' => count(glob(dirname(__DIR__) . '/database/fixtures/generated/*.json') ?: []) === 3,

@@ -153,6 +153,12 @@ function cleanupHttpEvent(mysqli $db, int $eventId): void
 
 $testDatabase = testDatabase();
 $testDatabase->close();
+$config = getenv('APP_DB_CONFIG');
+if (!is_string($config) || $config === '') {
+    throw new RuntimeException('Thiếu APP_DB_CONFIG cho HTTP smoke test.');
+}
+$httpDb = (new Database($config))->connection();
+
 $loginPage = httpRequest('GET', $baseUrl . '/?page=login', [], $cookie);
 checkStep('Mở trang đăng nhập', function () use ($loginPage): void {
     expect($loginPage['status'] === 200, 'HTTP không phải 200');
@@ -160,14 +166,122 @@ checkStep('Mở trang đăng nhập', function () use ($loginPage): void {
     expect(in_array('X-VolunteerHub-Environment: test', $loginPage['headers'], true), 'HTTP server không chạy với APP_ENV=test');
 });
 
+$signupPage = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+checkStep('Khách thấy đăng ký tài khoản và footer phiên bản', function () use ($signupPage): void {
+    expect($signupPage['status'] === 200 && str_contains($signupPage['body'], 'Đăng ký tình nguyện viên'), 'Không mở được biểu mẫu đăng ký');
+    expect(str_contains($signupPage['body'], 'Phiên bản 0.4.0-demo'), 'Footer thiếu phiên bản hiện tại');
+    expect(!str_contains($signupPage['body'], '>Phân công</a>') && !str_contains($signupPage['body'], '>Thống kê</a>'), 'Khách vẫn thấy menu nội bộ');
+});
+
+$invalidSignup = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($signupPage['body']),
+    'action' => 'signup',
+    'full_name' => 'Tài khoản kiểm thử',
+    'email' => 'khong-hop-le',
+    'username' => 'x',
+    'password' => 'ngan',
+    'password_confirmation' => 'khac',
+], $cookie);
+$invalidSignupPage = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+checkStep('Máy chủ từ chối dữ liệu đăng ký tài khoản sai', function () use ($invalidSignup, $invalidSignupPage): void {
+    expect($invalidSignup['status'] === 303, 'Đăng ký sai không dùng PRG');
+    expect(str_contains($invalidSignupPage['body'], 'Email không đúng định dạng')
+        && str_contains($invalidSignupPage['body'], 'Mật khẩu nhập lại không khớp'), 'Thiếu thông báo validation đăng ký');
+});
+
+$signupSuffix = gmdate('His') . bin2hex(random_bytes(2));
+$signupUsername = 'http_tnv_' . $signupSuffix;
+$signupEmail = $signupUsername . '@example.test';
+$signupPassword = 'TnvHttp@123';
+$validSignupPage = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+$createdAccount = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($validSignupPage['body']),
+    'action' => 'signup',
+    'full_name' => 'Tình nguyện viên HTTP',
+    'email' => $signupEmail,
+    'username' => $signupUsername,
+    'password' => $signupPassword,
+    'password_confirmation' => $signupPassword,
+], $cookie);
+$createdAccountRow = $httpDb->query(
+    "SELECT u.id, u.role, u.password_hash, vp.volunteer_code, vp.email
+     FROM users u JOIN volunteer_profiles vp ON vp.user_id = u.id
+     WHERE u.username = '" . $httpDb->real_escape_string($signupUsername) . "'"
+)->fetch_assoc();
+checkStep('Tạo tài khoản volunteer với mật khẩu băm và hồ sơ mặc định', function () use ($createdAccount, $createdAccountRow, $signupEmail, $signupPassword): void {
+    expect($createdAccount['status'] === 303 && str_contains((string) $createdAccount['location'], 'page=login'), 'Tạo tài khoản không chuyển về đăng nhập');
+    expect(($createdAccountRow['role'] ?? null) === 'volunteer', 'Tài khoản tự đăng ký không có role volunteer');
+    expect(password_verify($signupPassword, (string) ($createdAccountRow['password_hash'] ?? '')), 'Mật khẩu không được băm bằng password_hash');
+    expect(str_starts_with((string) ($createdAccountRow['volunteer_code'] ?? ''), 'TNV'), 'Không sinh mã tình nguyện viên');
+    expect(($createdAccountRow['email'] ?? null) === $signupEmail, 'Không lưu email hồ sơ');
+});
+
+$newLoginPage = httpRequest('GET', $baseUrl . '/?page=login', [], $cookie);
+$newLogin = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($newLoginPage['body']),
+    'action' => 'login',
+    'username' => $signupUsername,
+    'password' => $signupPassword,
+], $cookie);
+$newVolunteerHome = httpRequest('GET', $baseUrl . '/', [], $cookie);
+$newVolunteerForbiddenAssignments = httpRequest('GET', $baseUrl . '/?page=assignments', [], $cookie);
+$newVolunteerForbiddenStats = httpRequest('GET', $baseUrl . '/?page=stats', [], $cookie);
+checkStep('Menu volunteer đúng vai trò và route điều phối trả 403', function () use ($newLogin, $newVolunteerHome, $newVolunteerForbiddenAssignments, $newVolunteerForbiddenStats): void {
+    expect($newLogin['status'] === 303 && $newVolunteerHome['status'] === 200, 'Tài khoản mới không đăng nhập được');
+    expect(str_contains($newVolunteerHome['body'], '>Hồ sơ</a>') && str_contains($newVolunteerHome['body'], '>Ca của tôi</a>'), 'Menu volunteer thiếu chức năng cá nhân');
+    expect(!str_contains($newVolunteerHome['body'], '>Phân công</a>') && !str_contains($newVolunteerHome['body'], '>Thống kê</a>'), 'Menu volunteer làm lộ chức năng điều phối');
+    expect($newVolunteerForbiddenAssignments['status'] === 403 && $newVolunteerForbiddenStats['status'] === 403, 'Route điều phối không chặn volunteer');
+});
+
+$newVolunteerLogout = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($newVolunteerHome['body']),
+    'action' => 'logout',
+], $cookie);
+$duplicateSignupPage = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+$duplicateSignup = httpRequest('POST', $baseUrl . '/', [
+    'csrf_token' => csrfFrom($duplicateSignupPage['body']),
+    'action' => 'signup',
+    'full_name' => 'Email bị trùng',
+    'email' => $signupEmail,
+    'username' => $signupUsername . '_khac',
+    'password' => $signupPassword,
+    'password_confirmation' => $signupPassword,
+], $cookie);
+$duplicateSignupResult = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+checkStep('Chặn email trùng bằng ràng buộc cơ sở dữ liệu', function () use ($newVolunteerLogout, $duplicateSignup, $duplicateSignupResult): void {
+    expect($newVolunteerLogout['status'] === 303 && $duplicateSignup['status'] === 303, 'Luồng đăng xuất/đăng ký trùng không qua PRG');
+    expect(str_contains($duplicateSignupResult['body'], 'đã được sử dụng'), 'Thiếu thông báo email trùng');
+});
+
+$signupUserId = (int) ($createdAccountRow['id'] ?? 0);
+if ($signupUserId > 0) {
+    $httpDb->query("DELETE FROM volunteer_profiles WHERE user_id = $signupUserId");
+    $httpDb->query("DELETE FROM users WHERE id = $signupUserId");
+}
+
 $login = httpRequest('POST', $baseUrl . '/', [
-    'csrf_token' => csrfFrom($loginPage['body']),
+    'csrf_token' => csrfFrom($duplicateSignupResult['body']),
     'action' => 'login',
     'username' => 'dieuphoi',
     'password' => 'Dieuphoi@123',
 ], $cookie);
 checkStep('Điều phối đăng nhập', function () use ($login): void {
     expect($login['status'] === 303, 'Đăng nhập không chuyển hướng 303');
+});
+
+$seedVolunteerId = (int) $httpDb->query("SELECT id FROM users WHERE role = 'volunteer' ORDER BY id LIMIT 1")->fetch_assoc()['id'];
+$coordinatorVolunteerPage = httpRequest('GET', $baseUrl . '/?page=volunteers&id=' . $seedVolunteerId, [], $cookie);
+$coordinatorSignupPage = httpRequest('GET', $baseUrl . '/?page=signup', [], $cookie);
+checkStep('Điều phối thấy menu nội bộ và hồ sơ trong modal', function () use ($coordinatorVolunteerPage, $coordinatorSignupPage): void {
+    expect($coordinatorVolunteerPage['status'] === 200, 'Không mở được danh sách tình nguyện viên');
+    expect($coordinatorSignupPage['status'] === 403, 'Tài khoản đã đăng nhập vẫn mở được trang tự đăng ký');
+    expect(str_contains($coordinatorVolunteerPage['body'], '>Tình nguyện viên</a>')
+        && str_contains($coordinatorVolunteerPage['body'], '>Phân công</a>')
+        && str_contains($coordinatorVolunteerPage['body'], '>Thống kê</a>'), 'Menu điều phối thiếu chức năng nội bộ');
+    expect(!str_contains($coordinatorVolunteerPage['body'], '>Ca của tôi</a>'), 'Điều phối vẫn thấy menu Ca của tôi');
+    expect(str_contains($coordinatorVolunteerPage['body'], '<dialog class="profile-dialog"')
+        && str_contains($coordinatorVolunteerPage['body'], 'data-profile-dialog'), 'Hồ sơ chưa được render trong modal');
+    expect(!hasNestedForms($coordinatorVolunteerPage['body']), 'Modal hồ sơ có form lồng nhau không hợp lệ');
 });
 
 $newPage = httpRequest('GET', $baseUrl . '/?page=new_activity', [], $cookie);
@@ -303,7 +417,6 @@ checkStep('Chặn tình nguyện viên gọi handler điều phối', function (
     expect(str_contains($forbidden['body'], 'không có quyền'), 'Thiếu thông báo từ chối quyền');
 });
 
-$config = getenv('APP_DB_CONFIG');
 checkStep('Dữ liệu còn trong MySQL sau nhiều lượt tải trang', function () use ($config, $uniqueName): void {
     expect(is_string($config) && $config !== '', 'Thiếu APP_DB_CONFIG');
     $db = (new Database($config))->connection();

@@ -45,3 +45,7 @@ Thuật toán cải tiến là heuristic tham lam kèm sửa cục bộ tối đ
 
 - Chưa tạo tag/gói release `0.4.0-demo`; cây làm việc hiện còn thay đổi để người dùng xem trước và commit sau khi chấp nhận.
 - `comparison_group` bảo đảm hai thuật toán dùng cùng snapshot trong ứng dụng; công cụ fixture vẫn sinh artifact độc lập và ghi phiên bản mã, không ghi commit Git khi cây làm việc chưa commit.
+
+## Giới hạn đăng ký tài khoản trong bản demo
+
+Tài khoản volunteer tự đăng ký được kích hoạt ngay để thuận tiện trình diễn. Bản demo chưa gửi email xác minh, CAPTCHA hoặc quy trình điều phối duyệt tài khoản. Nếu triển khai công khai, cần bổ sung xác minh email, chống đăng ký tự động và chính sách kích hoạt trước khi cho tham gia hoạt động.

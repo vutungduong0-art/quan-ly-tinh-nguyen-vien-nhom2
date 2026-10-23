@@ -114,6 +114,10 @@ if ($fatalError === null) {
         if ($page === 'dashboard') {
             $counts = (new DashboardRepository(db()))->counts();
             $events = (new EventRepository(db()))->upcoming(3);
+        } elseif ($page === 'signup') {
+            if ($currentUser !== null) {
+                throw new HttpException(403, 'Bạn đã đăng nhập nên không thể mở trang đăng ký tài khoản.');
+            }
         } elseif ($page === 'activities') {
             $events = ($currentUser['role'] ?? '') === 'coordinator'
                 ? (new EventRepository(db()))->allForCoordinator(200)
@@ -190,6 +194,7 @@ $pageTitles = [
     'activity' => 'Chi tiết hoạt động',
     'new_activity' => 'Tạo hoạt động',
     'login' => 'Đăng nhập',
+    'signup' => 'Đăng ký tài khoản',
     'volunteers' => 'Tình nguyện viên',
     'assignments' => 'Phân công',
     'my_shifts' => 'Ca của tôi',
@@ -217,10 +222,14 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
         <nav class="main-nav" data-nav>
             <a class="<?= $page === 'dashboard' ? 'active' : '' ?>" href="<?= h(route_url('dashboard')) ?>">Tổng quan</a>
             <a class="<?= in_array($page, ['activities', 'activity', 'new_activity'], true) ? 'active' : '' ?>" href="<?= h(route_url('activities')) ?>">Hoạt động</a>
-            <a class="<?= $page === 'volunteers' ? 'active' : '' ?>" href="<?= h(route_url('volunteers')) ?>">Tình nguyện viên</a>
-            <a class="<?= $page === 'assignments' ? 'active' : '' ?>" href="<?= h(route_url('assignments')) ?>">Phân công</a>
-            <a class="<?= $page === 'my_shifts' ? 'active' : '' ?>" href="<?= h(route_url('my_shifts')) ?>">Ca của tôi</a>
-            <a class="<?= $page === 'stats' ? 'active' : '' ?>" href="<?= h(route_url('stats')) ?>">Thống kê</a>
+            <?php if (($currentUser['role'] ?? '') === 'coordinator'): ?>
+                <a class="<?= $page === 'volunteers' ? 'active' : '' ?>" href="<?= h(route_url('volunteers')) ?>">Tình nguyện viên</a>
+                <a class="<?= $page === 'assignments' ? 'active' : '' ?>" href="<?= h(route_url('assignments')) ?>">Phân công</a>
+                <a class="<?= $page === 'stats' ? 'active' : '' ?>" href="<?= h(route_url('stats')) ?>">Thống kê</a>
+            <?php elseif (($currentUser['role'] ?? '') === 'volunteer'): ?>
+                <a class="<?= $page === 'volunteers' ? 'active' : '' ?>" href="<?= h(route_url('volunteers')) ?>">Hồ sơ</a>
+                <a class="<?= $page === 'my_shifts' ? 'active' : '' ?>" href="<?= h(route_url('my_shifts')) ?>">Ca của tôi</a>
+            <?php endif; ?>
         </nav>
         <div class="account-area">
             <?php if ($currentUser): ?>
@@ -231,6 +240,7 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                     <button class="link-button" type="submit">Đăng xuất</button>
                 </form>
             <?php else: ?>
+                <a class="text-link account-signup" href="<?= h(route_url('signup')) ?>">Đăng ký</a>
                 <a class="button button-small" href="<?= h(route_url('login')) ?>">Đăng nhập</a>
             <?php endif; ?>
         </div>
@@ -276,6 +286,34 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                     <input type="password" name="password" autocomplete="current-password" required>
                 </label>
                 <button class="button button-wide" type="submit">Đăng nhập</button>
+                <p class="auth-switch">Chưa có tài khoản? <a class="text-link" href="<?= h(route_url('signup')) ?>">Đăng ký tình nguyện viên</a></p>
+            </form>
+        </section>
+    <?php elseif ($page === 'signup'): ?>
+        <section class="auth-layout signup-layout">
+            <div class="auth-message">
+                <span class="eyebrow">Tham gia cộng đồng</span>
+                <h1>Tạo tài khoản để bắt đầu đóng góp.</h1>
+                <p>Tài khoản mới luôn có vai trò tình nguyện viên. Quyền điều phối chỉ được cấp nội bộ để bảo vệ dữ liệu và lịch phân công.</p>
+                <div class="demo-accounts">
+                    <p><strong>Sau khi đăng ký</strong></p>
+                    <p>Bạn có thể cập nhật hồ sơ, kỹ năng, lịch rảnh, đăng ký hoạt động và theo dõi các ca được phân công.</p>
+                </div>
+            </div>
+            <form class="panel auth-card" method="post">
+                <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                <input type="hidden" name="action" value="signup">
+                <div><span class="eyebrow">Tài khoản mới</span><h2>Đăng ký tình nguyện viên</h2></div>
+                <label>Họ tên<input type="text" name="full_name" maxlength="160" value="<?= h($old['full_name'] ?? '') ?>" autocomplete="name" required autofocus></label>
+                <label>Email<input type="email" name="email" maxlength="190" value="<?= h($old['email'] ?? '') ?>" autocomplete="email" required></label>
+                <label>Tên đăng nhập
+                    <input type="text" name="username" minlength="4" maxlength="80" pattern="[A-Za-z0-9._-]+" value="<?= h($old['username'] ?? '') ?>" autocomplete="username" required>
+                    <span>4–80 ký tự; dùng chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.</span>
+                </label>
+                <label>Mật khẩu<input type="password" name="password" minlength="8" maxlength="128" autocomplete="new-password" required><span>Tối thiểu 8 ký tự.</span></label>
+                <label>Nhập lại mật khẩu<input type="password" name="password_confirmation" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+                <button class="button button-wide" type="submit">Tạo tài khoản</button>
+                <p class="auth-switch">Đã có tài khoản? <a class="text-link" href="<?= h(route_url('login')) ?>">Đăng nhập</a></p>
             </form>
         </section>
     <?php elseif ($page === 'dashboard'): ?>
@@ -417,7 +455,7 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
             </section>
         <?php endif; ?>
     <?php elseif ($page === 'volunteers'): ?>
-        <section class="page-heading"><div><span class="eyebrow">Nguồn lực</span><h1>Tình nguyện viên</h1><p>Quản lý hồ sơ, kỹ năng và lịch rảnh dùng trực tiếp khi kiểm tra điều kiện phân công.</p></div></section>
+        <section class="page-heading"><div><span class="eyebrow">Nguồn lực</span><h1><?= ($currentUser['role'] ?? '') === 'coordinator' ? 'Tình nguyện viên' : 'Hồ sơ của tôi' ?></h1><p><?= ($currentUser['role'] ?? '') === 'coordinator' ? 'Quản lý hồ sơ, kỹ năng và lịch rảnh dùng trực tiếp khi kiểm tra điều kiện phân công.' : 'Cập nhật thông tin, kỹ năng và lịch rảnh để nhận ca phù hợp.' ?></p></div></section>
         <?php if (($currentUser['role'] ?? '') === 'coordinator'): ?>
             <div class="panel table-wrap"><table><thead><tr><th>Mã</th><th>Họ tên</th><th>Kỹ năng</th><th>Ca hiện tại</th><th></th></tr></thead><tbody>
             <?php foreach ($volunteers as $item): ?><tr><td><?= h($item['volunteer_code'] ?: $item['username']) ?></td><td><strong><?= h($item['full_name']) ?></strong><br><small><?= h($item['email'] ?? '') ?></small></td><td><?= h($item['skill_names'] ?: 'Chưa khai báo') ?></td><td><?= h($item['active_assignments']) ?></td><td><a class="text-link" href="<?= h(route_url('volunteers', ['id' => $item['id']])) ?>">Mở hồ sơ →</a></td></tr><?php endforeach; ?>
@@ -425,7 +463,17 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
         <?php endif; ?>
 
         <?php if ($volunteerProfile): ?>
-            <section class="section-block detail-grid">
+            <?php $profileInModal = ($currentUser['role'] ?? '') === 'coordinator'; ?>
+            <?php if ($profileInModal): ?>
+                <dialog class="profile-dialog" data-profile-dialog data-close-url="<?= h(route_url('volunteers')) ?>" aria-labelledby="profile-dialog-title">
+                    <div class="profile-dialog-heading">
+                        <div><span class="eyebrow">Hồ sơ tình nguyện viên</span><h2 id="profile-dialog-title"><?= h($volunteerProfile['full_name']) ?></h2></div>
+                        <button class="modal-close" type="button" data-modal-close aria-label="Đóng hồ sơ">×</button>
+                    </div>
+                    <div class="profile-dialog-content detail-grid">
+            <?php else: ?>
+                <section class="section-block detail-grid">
+            <?php endif; ?>
                 <form method="post" class="panel form-card stack-form">
                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="save_profile"><input type="hidden" name="volunteer_id" value="<?= h($volunteerProfile['id']) ?>">
                     <div><span class="eyebrow">Hồ sơ</span><h2><?= h($volunteerProfile['full_name']) ?></h2></div>
@@ -449,8 +497,13 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
                         <form method="post" class="stack-form"><input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>"><input type="hidden" name="action" value="add_availability"><input type="hidden" name="volunteer_id" value="<?= h($volunteerProfile['id']) ?>"><label>Bắt đầu <span>(giờ Việt Nam)</span><input type="datetime-local" name="start_at" required></label><label>Kết thúc <span>(giờ Việt Nam)</span><input type="datetime-local" name="end_at" required></label><button class="button button-secondary" type="submit">Thêm khoảng rảnh</button></form>
                     </section>
                 </div>
-            </section>
-        <?php elseif (($currentUser['role'] ?? '') === 'coordinator'): ?><div class="panel empty-inline">Chọn “Mở hồ sơ” để xem và chỉnh sửa chi tiết.</div><?php endif; ?>
+            <?php if ($profileInModal): ?>
+                    </div>
+                </dialog>
+            <?php else: ?>
+                </section>
+            <?php endif; ?>
+        <?php endif; ?>
     <?php elseif ($page === 'assignments'): ?>
         <section class="page-heading"><div><span class="eyebrow">Điều phối có kiểm soát</span><h1>Phân công</h1><p>Tạo phương án bằng hai thuật toán, xem chỉ số rồi công bố khi snapshot còn mới.</p></div></section>
         <form class="panel filter-bar" method="get"><input type="hidden" name="page" value="assignments"><label>Hoạt động<select name="event_id"><?php foreach ($events as $item): ?><option value="<?= h($item['id']) ?>" <?= (int) $item['id'] === (int) $selectedEventId ? 'selected' : '' ?>><?= h($item['name']) ?></option><?php endforeach; ?></select></label><button class="button button-secondary" type="submit">Xem</button></form>
@@ -503,7 +556,10 @@ $title = $pageTitles[$page] ?? 'Không tìm thấy';
     <?php endif; ?>
 </main>
 
-<footer class="site-footer"><div><strong>VolunteerHub</strong><span>Hệ thống tổ chức & phân công · Đề tài 6</span></div><p>Giờ hiển thị: Việt Nam (UTC+7)</p></footer>
+<footer class="site-footer">
+    <div><strong>VolunteerHub</strong><span>Hệ thống tổ chức hoạt động và phân công tình nguyện viên · Đề tài 6</span></div>
+    <p>© <?= h(date('Y')) ?> · Phiên bản <?= h(app_version()) ?> · Giờ Việt Nam (UTC+7)</p>
+</footer>
 <script src="/assets/app.js"></script>
 </body>
 </html>

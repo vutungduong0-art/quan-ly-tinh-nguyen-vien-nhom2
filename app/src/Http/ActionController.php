@@ -12,6 +12,7 @@ final class ActionController
     {
         switch ($action) {
             case 'login': $this->login();
+            case 'signup': $this->signup();
             case 'logout': $this->logout();
             case 'create_event': $this->createEvent();
             case 'update_event': $this->updateEvent();
@@ -51,6 +52,53 @@ final class ActionController
         }
         set_flash('error', 'Tên đăng nhập hoặc mật khẩu không đúng.', ['username' => $username]);
         redirect_to('login');
+    }
+
+    private function signup(): never
+    {
+        if ($this->auth->user() !== null) {
+            throw new HttpException(403, 'Bạn đã đăng nhập nên không thể tạo thêm tài khoản tại đây.');
+        }
+
+        $errors = [];
+        $username = Validator::requiredText($_POST['username'] ?? null, 'Tên đăng nhập', 80, $errors);
+        $fullName = Validator::requiredText($_POST['full_name'] ?? null, 'Họ tên', 160, $errors);
+        $email = Validator::requiredText($_POST['email'] ?? null, 'Email', 190, $errors);
+        $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+        $confirmation = is_string($_POST['password_confirmation'] ?? null) ? $_POST['password_confirmation'] : '';
+
+        if (!preg_match('/^[A-Za-z0-9._-]{4,80}$/', $username)) {
+            $errors[] = 'Tên đăng nhập phải có 4–80 ký tự và chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.';
+        }
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $errors[] = 'Email không đúng định dạng.';
+        }
+        if (strlen($password) < 8 || strlen($password) > 128) {
+            $errors[] = 'Mật khẩu phải có từ 8 đến 128 ký tự.';
+        }
+        if (!hash_equals($password, $confirmation)) {
+            $errors[] = 'Mật khẩu nhập lại không khớp.';
+        }
+
+        $old = ['username' => $username, 'full_name' => $fullName, 'email' => $email];
+        if ($errors !== []) {
+            set_flash('error', implode(' ', $errors), $old);
+            redirect_to('signup');
+        }
+
+        try {
+            $this->auth->registerVolunteer([
+                'username' => $username,
+                'full_name' => $fullName,
+                'email' => $email,
+                'password' => $password,
+            ]);
+            set_flash('success', 'Tạo tài khoản tình nguyện viên thành công. Bạn có thể đăng nhập ngay.');
+            redirect_to('login');
+        } catch (DomainException $exception) {
+            set_flash('error', $exception->getMessage(), $old);
+            redirect_to('signup');
+        }
     }
 
     private function logout(): never
