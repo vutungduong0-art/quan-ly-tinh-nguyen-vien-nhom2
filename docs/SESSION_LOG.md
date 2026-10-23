@@ -39,3 +39,4 @@
 - Thêm kiểm tra quyền MySQL tối thiểu cho cấu hình app. Kiểm tra trên server thật xác nhận kết nối đúng cổng/schema nhưng chủ động FAIL vì tài khoản hiện có `ALL`; cấu hình cũ được giữ nguyên.
 - Dựng MySQL cô lập cục bộ với `volunteer_test` để xác minh: 20 unit, 3 fixture, 11 integration, quản lý hoạt động/ca, stale và concurrency đạt; HTTP 28/28 đạt; lint sạch; migration/seed chạy lại không nhân dữ liệu.
 - Xác nhận workspace hiện có repository thật trên nhánh `lab05`; thêm MIT `LICENSE`, `VERSION` và công cụ tạo tar.gz/checksum chỉ từ Git `HEAD`. Không push và không tạo issue/review/đóng góp giả.
+- Tạo gói từ commit `4a1fe90`, xác minh checksum và không có `.git`, `.local`, `release`; giải nén vào thư mục sạch, chạy migration 001–003, seed, `extend` và HTTP 28/28 trên schema `volunteer_release_test`. Sau đó xóa đúng schema/thư mục/cấu hình tạm.

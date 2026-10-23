@@ -35,7 +35,7 @@ Guard của test sẽ từ chối chạy nếu cấu hình trỏ nhầm `volunte
 
 - Workbench chưa được người dùng mở để đối chiếu trực tiếp UUID. Giá trị PHP cần đối chiếu: `0e47d81a-cb0f-11f1-8097-00155d38bf23`, port `3307`.
 - Chưa có issue, review hoặc bảng đóng góp thành viên thật nên C01 và phần quy trình H01 chưa thể đánh giá. Không tạo dữ liệu giả để lấp chỗ trống này.
-- Cần giải nén gói `release/volunteerhub-0.3.0-demo.tar.gz` vào thư mục sạch và cài trên `volunteer_test` thật sau khi quyền MySQL được cấp.
+- Gói đã được cài sạch trên MySQL 8.4.11 cô lập. Vẫn nên chạy lại trên `volunteer_test` của đúng server cổng 3307 sau khi quyền được cấp để đối chiếu môi trường cuối.
 
 ## Giới hạn thuật toán đã biết
 

@@ -700,6 +700,6 @@ Gói và checksum nằm trong `release/`, được `.gitignore` loại khỏi re
 - Ghi issue/review và bảng đóng góp theo thành viên thật; AI không tự tạo minh chứng đóng góp.
 - Dùng quyền quản trị MySQL cấp đúng quyền cho `volunteer_app`, rồi chạy lại `php tools/configure.php app`. Cấu hình PHP hiện vẫn xác thực bằng `volunteer_migrator`, hoạt động nhưng rộng quyền hơn khuyến nghị.
 - Mở Workbench và đối chiếu trực tiếp `@@server_uuid` với `bash lab.sh db-info`; server PHP hiện đã xác minh là cổng 3307/schema `volunteer_app`.
-- Tạo `volunteer_test` thật trên MySQL cổng 3307 và chạy lại toàn bộ test ở mục 15; phiên phát triển đã kiểm chứng trên MySQL cô lập nhưng tài khoản hiện tại chưa có quyền tạo schema mới trên server thật.
+- Tạo `volunteer_test` thật trên MySQL cổng 3307 và chạy lại toàn bộ test ở mục 15 để đối chiếu môi trường cuối; gói release đã được cài sạch và kiểm chứng trên MySQL 8.4.11 cô lập nhưng tài khoản hiện tại chưa có quyền tạo schema mới trên server thật.
 
 Trạng thái hiện tại nằm trong `docs/STATE.md`; ma trận yêu cầu nằm trong `docs/REQUIREMENTS.md`.

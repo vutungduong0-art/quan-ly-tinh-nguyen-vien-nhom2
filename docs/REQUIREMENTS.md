@@ -15,7 +15,7 @@ Trạng thái ngày 23/10/2026 dựa trên mã và kiểm thử thực tế, kh�
 | S01 | Đạt | `dataset_versions`, snapshot JSON, SHA-256, config/version thuật toán và run assignments |
 | S02 | Đạt phần mã, chờ cấu hình | Role/ownership/CSRF/giao dịch, rate limit, session/header đạt; tool từ chối tài khoản web có DDL/ALL; server thật chưa được đổi khỏi migrator |
 | Q01 | Đạt trên DB test cô lập | 20 unit, 3 fixture, 11 integration, quản lý event/shift, I04, I05 và 28 HTTP; guard test DB đạt |
-| H01 | Đạt phần mã | Git/remote, MIT, VERSION, tài liệu và công cụ release có checksum; còn cần cài thử gói trên `volunteer_test` thật và bằng chứng issue/review của nhóm |
+| H01 | Đạt kỹ thuật, thiếu quy trình nhóm | Git/remote, MIT, VERSION, tài liệu, tar.gz/checksum và cài sạch release đã đạt; còn thiếu bằng chứng issue/review thật của nhóm |
 | C01 | Chưa đánh giá | Chưa có thông tin thành viên/đóng góp thật; không tạo minh chứng giả |
 
 Năm phép thử bắt buộc B01–B05 đều có minh chứng trong `tests/run.php`, `tests/http_smoke.php`, `tests/concurrency.php`, `tests/stale_plan.php` và `artifacts/comparison/`.

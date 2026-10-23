@@ -12,8 +12,11 @@ Môi trường test: PHP 8.5.4 với `mysqli`/`mysqlnd`; MySQL 8.4.11 cô lập 
 | `bash lab.sh http-test` | 28 đạt, 0 lỗi; server test riêng 18106; dữ liệu tạm tự dọn | 0 |
 | `bash lab.sh integration` khi thiếu `test-db.json` | Từ chối chạy, không rơi về DB ứng dụng | 1 mong đợi |
 | `bash lab.sh check` trên MySQL thật 3307 | Mã/PHP/migration/server/schema đạt; từ chối tài khoản web có DDL/ALL | 1 mong đợi |
+| Cài gói `volunteerhub-0.3.0-demo.tar.gz` vào schema sạch `volunteer_release_test` | Migration 001–003 + seed + `extend` + HTTP 28/28 đều đạt | 0 |
 
 Các kiểm thử mới bao phủ: sửa/đóng hoạt động; sửa/xóa ca an toàn; chặn thao tác khi có phân công; audit/revision; khóa đăng nhập sau 5 lần sai; tài khoản bị vô hiệu hóa làm session cũ mất hiệu lực; security header/môi trường; không còn form HTML lồng nhau; test DB fail-closed.
+
+Gói release candidate được tạo từ commit `4a1fe90`, giải nén tại thư mục tạm, cấu hình bằng schema sạch trên MySQL cô lập rồi kiểm tra từ chính cây đã giải nén. Bản đóng gói cuối có checksum đi kèm tại `release/volunteerhub-0.3.0-demo.tar.gz.sha256`. Schema, thư mục và cấu hình test tạm được dọn sau khi hoàn tất.
 
 Kết quả `check` trên server thật không được ghi là PASS: cần đổi `app/.local/db.json` sang `volunteer_app@localhost` chỉ có `SELECT, INSERT, UPDATE, DELETE`.
 
@@ -50,6 +53,6 @@ Tỷ lệ lấp vị trí tương ứng: 100%, 94.44%, 100% ở cả hai thuật
 
 ## Chưa được ghi là PASS
 
-- Chưa thử cài tar.gz release vào schema sạch trên MySQL server thật vì chưa có quyền tạo `volunteer_test` tại cổng 3307.
+- Chưa chạy bộ test ghi dữ liệu trên `volunteer_test` của MySQL server thật cổng 3307 vì tài khoản hiện tại chưa có quyền tạo schema đó; gói release đã được cài sạch và kiểm chứng trên MySQL cô lập cùng phiên bản 8.4.11.
 - Chưa đối chiếu trực tiếp trong giao diện Workbench; chỉ đã có UUID/port/schema phía PHP để người dùng so sánh.
 - Tài khoản DB của web vẫn là migrator; xem `KNOWN_ISSUES.md`.
