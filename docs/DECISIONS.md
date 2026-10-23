@@ -23,3 +23,14 @@
 - Baseline là `registration_order` v1.0.0; cải tiến là `scarcity_balanced` v1.0.0, tối đa 100 lượt sửa cục bộ, xác định và không cam kết tối ưu.
 - Ba mã fixture chuẩn dùng chữ hoa trong tên tệp: `DU_NGUOI_V1`, `THIEU_NGUOI_V1`, `TRUNG_LICH_V1`.
 - CSV thêm UTF-8 BOM và tiền tố `'` cho ô bắt đầu bằng `=`, `+`, `-`, `@`.
+
+## 2026-10-23 — Ổn định hóa, bảo mật và phát hành demo
+
+- Đóng hoạt động là thao tác một chiều trong UI; từ chối nếu còn phân công hiệu lực hoặc yêu cầu thay người mở. Các nháp liên quan được chuyển `superseded`.
+- Không cho thay giờ/nhu cầu/kỹ năng của ca đang có phân công hiệu lực; vẫn cho đổi tên. Chỉ xóa ca chưa có bất kỳ lịch sử phân công/run assignment nào.
+- Mọi integration/HTTP/concurrency test có ghi dữ liệu bắt buộc dùng schema hậu tố `_test`; `volunteer_app` luôn bị guard từ chối dù biến môi trường cấu hình sai.
+- Tài khoản web chỉ được có `SELECT, INSERT, UPDATE, DELETE`; migration/test dùng tài khoản riêng có DDL trong đúng schema của nó.
+- Khóa đăng nhập dùng cửa sổ 15 phút, tối đa 5 lần sai; chỉ lưu hash định danh/IP trong bảng, không lưu mật khẩu hoặc username thử sai.
+- Migration đã áp dụng là bất biến; SHA-256 được lưu và so sánh ở các lần chạy sau.
+- `public/index.php` giữ vai trò điều phối/render; toàn bộ POST action, validation và redirect nằm trong `ActionController` để giảm front controller đơn khối.
+- Phiên bản demo là `0.3.0-demo`; gói bàn giao được tạo từ Git `HEAD`, không lấy file bí mật/không theo dõi trong working tree.

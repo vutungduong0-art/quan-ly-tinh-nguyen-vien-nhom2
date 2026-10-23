@@ -2,7 +2,7 @@
 
 ## Quyền tài khoản MySQL ứng dụng
 
-`bash lab.sh db-info` và `SHOW GRANTS FOR CURRENT_USER()` xác nhận PHP hiện dùng `volunteer_migrator@localhost`, có `ALL PRIVILEGES` trên riêng `volunteer_app.*`. Ứng dụng chạy đúng nhưng chưa đạt nguyên tắc quyền tối thiểu.
+`bash lab.sh check` xác nhận PHP kết nối đúng MySQL 8.4.11/schema `volunteer_app`, nhưng chủ động trả mã 1 vì tài khoản hiện dùng có `ALL PRIVILEGES`. Ứng dụng chạy được nhưng chưa đạt nguyên tắc quyền tối thiểu.
 
 Cần đăng nhập MySQL bằng quyền quản trị và chạy:
 
@@ -15,12 +15,27 @@ FLUSH PRIVILEGES;
 
 Sau đó chạy `php tools/configure.php app`; không gửi mật khẩu vào hội thoại.
 
-## Bàn giao bên ngoài mã
+## Chưa có `volunteer_test` trên server thật
 
-- Workspace không phải Git repository hợp lệ nên chưa có nhánh, commit, tag hoặc release để kiểm chứng.
-- Chưa có quyền tạo schema sạch riêng để thử cài release từ đầu; không reset `volunteer_app` đang dùng.
+Tài khoản migration hiện tại không có quyền tạo schema mới, đúng với phạm vi đã cấp. Vì vậy bộ kiểm thử ghi dữ liệu đã được chạy trên một MySQL cô lập tạm thời thay vì `volunteer_app`.
+
+Quản trị viên cần tạo `volunteer_test`, cấp DDL trong đúng schema này cho tài khoản test, sau đó chạy:
+
+```bash
+cd /home/lynn/project_6/app
+php tools/configure.php test
+bash lab.sh test-prepare
+bash lab.sh extend
+bash lab.sh http-test
+```
+
+Guard của test sẽ từ chối chạy nếu cấu hình trỏ nhầm `volunteer_app` hoặc schema không kết thúc bằng `_test`.
+
+## Bàn giao cần bằng chứng của nhóm
+
 - Workbench chưa được người dùng mở để đối chiếu trực tiếp UUID. Giá trị PHP cần đối chiếu: `0e47d81a-cb0f-11f1-8097-00155d38bf23`, port `3307`.
-- Chưa có thông tin thành viên, issue hoặc review thật nên C01 và phần quy trình H01 chưa thể đánh giá.
+- Chưa có issue, review hoặc bảng đóng góp thành viên thật nên C01 và phần quy trình H01 chưa thể đánh giá. Không tạo dữ liệu giả để lấp chỗ trống này.
+- Cần giải nén gói `release/volunteerhub-0.3.0-demo.tar.gz` vào thư mục sạch và cài trên `volunteer_test` thật sau khi quyền MySQL được cấp.
 
 ## Giới hạn thuật toán đã biết
 

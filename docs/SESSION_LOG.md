@@ -26,3 +26,16 @@
 - HTTP ban đầu lỗi do test chọn nhầm một ca cũ theo regex; sửa test định vị đúng hoạt động và kiểm chứng trạng thái từ DB. Lần cuối 27/27 đạt.
 - Dọn đúng 5 hoạt động có tiền tố kiểm thử do các lượt HTTP trước tạo; các bài HTTP mới tự dọn hoạt động tạm của chính nó. Không xóa dữ liệu dự án khác.
 - Xác minh cấu hình web hiện dùng `volunteer_migrator`; ghi thành vấn đề quyền tối thiểu cần người dùng sửa bằng quyền quản trị.
+
+## 2026-10-23 — Tám cải tiến ổn định hóa mốc 0.3.0-demo
+
+- Đọc lại `AGENT.md`, kế hoạch, trạng thái và kiểm tra Git/mã/MySQL trước khi sửa; giữ nguyên dữ liệu `volunteer_app`.
+- Bổ sung sửa/đóng hoạt động và sửa/xóa ca. Mọi thao tác kiểm tra trạng thái, thời gian, phân công/lịch sử liên quan, khóa `schedule_guard`, tăng revision và ghi audit trong transaction.
+- Chặn đăng ký vào hoạt động đã đóng/hết hạn; snapshot chỉ nhận hoạt động đang công bố.
+- Tạo migration `003_hardening.sql` cho giới hạn đăng nhập; thêm checksum migration và từ chối migration đã áp dụng bị sửa.
+- Gia cố đăng nhập: giới hạn 5 lần sai/15 phút theo hash tài khoản và IP, xoay session/CSRF, timeout nhàn rỗi 30 phút, kiểm tra lại role/trạng thái user mỗi request, cookie và security headers.
+- Tách xử lý POST khỏi `public/index.php` sang `src/Http/ActionController.php`; sửa HTML lồng form ở phần lịch rảnh; thêm xác nhận thao tác nguy hiểm.
+- Tách tuyệt đối test DB: `TestDatabase` chỉ cho phép schema hậu tố `_test`, `lab.sh http-test` tự chạy server cổng 18106 với header môi trường test, không dùng server demo/DB ứng dụng.
+- Thêm kiểm tra quyền MySQL tối thiểu cho cấu hình app. Kiểm tra trên server thật xác nhận kết nối đúng cổng/schema nhưng chủ động FAIL vì tài khoản hiện có `ALL`; cấu hình cũ được giữ nguyên.
+- Dựng MySQL cô lập cục bộ với `volunteer_test` để xác minh: 20 unit, 3 fixture, 11 integration, quản lý hoạt động/ca, stale và concurrency đạt; HTTP 28/28 đạt; lint sạch; migration/seed chạy lại không nhân dữ liệu.
+- Xác nhận workspace hiện có repository thật trên nhánh `lab05`; thêm MIT `LICENSE`, `VERSION` và công cụ tạo tar.gz/checksum chỉ từ Git `HEAD`. Không push và không tạo issue/review/đóng góp giả.

@@ -11,8 +11,11 @@ final class DatabasePrivileges
     {
         $rows = $db->query('SHOW GRANTS FOR CURRENT_USER()')->fetch_all(MYSQLI_NUM);
         $text = strtoupper(implode("\n", array_map(static fn (array $row): string => (string) ($row[0] ?? ''), $rows)));
-        $missing = array_values(array_filter(self::REQUIRED, static fn (string $privilege): bool => !str_contains($text, $privilege)));
-        $excessive = str_contains($text, 'ALL PRIVILEGES');
+        $hasAll = str_contains($text, 'ALL PRIVILEGES');
+        $missing = $hasAll
+            ? []
+            : array_values(array_filter(self::REQUIRED, static fn (string $privilege): bool => !str_contains($text, $privilege)));
+        $excessive = $hasAll;
         foreach (self::FORBIDDEN as $privilege) {
             if (preg_match('/(?:^|[ ,])' . preg_quote($privilege, '/') . '(?:[ ,]|$)/', $text)) {
                 $excessive = true;

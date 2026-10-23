@@ -2,12 +2,12 @@
 
 VolunteerHub là bản triển khai Đề tài 6 bằng PHP, MySQLi, MySQL Server, HTML, CSS và JavaScript thuần. Dự án đã đi tiếp từ checkpoint demo ban đầu: các chức năng nghiệp vụ F01–F05, hai thuật toán phân công, snapshot/revision, báo vắng–thay người, thống kê và CSV đều đã nối với dữ liệu MySQL thật.
 
-Phần chưa thể tự hoàn tất chỉ là thủ tục bàn giao bên ngoài mã nguồn: Git repository/commit/release, issue/review và bảng đóng góp thành viên chưa có dữ liệu thực tế để ghi. Xem `docs/STATE.md` và `docs/KNOWN_ISSUES.md`.
+Mốc `0.3.0-demo` bổ sung tám cải tiến: sửa/đóng hoạt động; sửa/xóa ca an toàn; cơ sở dữ liệu test tách biệt; tài khoản web quyền tối thiểu; HTML không lồng biểu mẫu; Git/giấy phép/gói phát hành; tách xử lý POST khỏi front controller; và gia cố đăng nhập/session/CSRF/header bảo mật. Issue, review và bảng đóng góp thành viên vẫn phải dùng bằng chứng thật của nhóm, không được tạo giả.
 
 ## 1. Chức năng hiện có
 
 - Giao diện tiếng Việt màu xanh lá, responsive, dashboard đọc số liệu trực tiếp từ MySQL.
-- Quản lý hoạt động, ca, nhu cầu và nhiều kỹ năng yêu cầu; validation giờ và số người ở máy chủ.
+- Quản lý thêm/sửa/đóng hoạt động và thêm/sửa/xóa ca an toàn; chặn thay đổi làm sai phân công đang hiệu lực; validation giờ và số người ở máy chủ.
 - Hồ sơ tình nguyện viên, kỹ năng, lịch rảnh; chặn xóa dữ liệu đang làm phân công mất hợp lệ.
 - Đăng ký, rút/tái đăng ký, lịch sử đăng ký và trang **Ca của tôi**.
 - Bộ `EligibilityChecker` dùng chung: tài khoản hoạt động, đăng ký, đủ toàn bộ kỹ năng, lịch rảnh phủ ca, không trùng lịch và không vượt chỗ.
@@ -17,7 +17,8 @@ Phần chưa thể tự hoàn tất chỉ là thủ tục bàn giao bên ngoài 
 - Phân công thủ công, gỡ phân công, xác nhận, báo vắng, hàng đợi thay người và nhật ký audit.
 - Thống kê hoạt động/lần chạy; xuất CSV UTF-8 và vô hiệu hóa tiền tố công thức bảng tính.
 - Ba fixture `DU_NGUOI_V1`, `THIEU_NGUOI_V1`, `TRUNG_LICH_V1`, mỗi bộ đúng 30 người/12 ca/5 kỹ năng.
-- Session, `password_hash`/`password_verify`, CSRF, role/ownership server-side, prepared statements, escaping HTML, khóa ngoại/unique/CHECK.
+- Session chặt chẽ, khóa tạm sau nhiều lần đăng nhập sai, `password_hash`/`password_verify`, CSRF, role/ownership server-side, security headers, prepared statements, escaping HTML, khóa ngoại/unique/CHECK.
+- Migration có checksum chống sửa lịch sử; kiểm thử ghi dữ liệu chỉ được chạy trên schema có hậu tố `_test`.
 
 ## 2. Thông tin môi trường của dự án
 
@@ -192,6 +193,26 @@ EXIT;
 
 MySQL trên máy hiện nhận các kết nối TCP cục bộ dưới dạng `user@localhost`, nên tài liệu dùng host tài khoản là `localhost` dù PHP kết nối tới địa chỉ `127.0.0.1`.
 
+### 6.6. Tạo schema kiểm thử riêng
+
+Không chạy integration/HTTP/concurrency test trên `volunteer_app`. Trong phiên MySQL có quyền quản trị, tạo schema và tài khoản chỉ dành cho test:
+
+```sql
+CREATE DATABASE IF NOT EXISTS volunteer_test
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'volunteer_test'@'localhost'
+  IDENTIFIED BY '<MAT_KHAU_TEST_RIENG>';
+ALTER USER 'volunteer_test'@'localhost'
+  IDENTIFIED BY '<MAT_KHAU_TEST_RIENG>';
+GRANT ALL PRIVILEGES ON volunteer_test.*
+  TO 'volunteer_test'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Tài khoản test cần DDL trong đúng `volunteer_test` vì bộ test tự chạy migration. Không cấp quyền của schema test cho tài khoản web production.
+
 ## 7. Kiểm tra hai tài khoản MySQL trước khi cấu hình PHP
 
 Kiểm tra migration:
@@ -274,6 +295,16 @@ Kết quả thành công:
 
 Hai tệp trong `app/.local/` chứa mật khẩu cục bộ, đã được `.gitignore` loại khỏi Git. Không sao chép nội dung các tệp này vào báo cáo hoặc hội thoại.
 
+`configure.php app` sẽ từ chối tài khoản thiếu `SELECT, INSERT, UPDATE, DELETE` hoặc có quyền `ALL`/DDL. Nếu cấu hình mới không đạt, tệp cấu hình cũ được giữ nguyên.
+
+### 8.3. Cấu hình cơ sở dữ liệu kiểm thử
+
+```bash
+php tools/configure.php test
+```
+
+Nhập host `127.0.0.1`, port `3307`, schema `volunteer_test`, tài khoản `volunteer_test` và mật khẩu test đã tạo ở mục 6.6. Công cụ lưu vào `app/.local/test-db.json`; tệp này cũng không được đưa vào Git.
+
 ## 9. Chạy migration, seed và kiểm thử
 
 Vẫn ở thư mục `/home/lynn/project_6/app`, chạy từng lệnh và kiểm tra kết quả trước khi sang lệnh tiếp theo:
@@ -282,15 +313,16 @@ Vẫn ở thư mục `/home/lynn/project_6/app`, chạy từng lệnh và kiểm
 bash lab.sh migrate
 ```
 
-Kết quả lần đầu phải có cả hai migration:
+Kết quả lần đầu phải có ba migration:
 
 ```text
 Đã áp dụng 001_demo_core.sql.
 Đã áp dụng 002_full_project.sql.
+Đã áp dụng 003_hardening.sql.
 Migration hoàn tất.
 ```
 
-Chạy lại migration là an toàn; lần sau sẽ báo migration đã được áp dụng.
+Chạy lại migration là an toàn; lần sau sẽ báo migration đã được áp dụng và checksum hợp lệ. Nếu một tệp migration cũ bị sửa sau khi áp dụng, lệnh sẽ dừng thay vì âm thầm chấp nhận lịch sử khác nhau.
 
 Nạp dữ liệu mẫu:
 
@@ -312,16 +344,17 @@ Chạy unit test:
 bash lab.sh test
 ```
 
-Chạy integration test với MySQL hiện tại:
+Chuẩn bị rồi chạy integration test trên `volunteer_test`:
 
 ```bash
+bash lab.sh test-prepare
 bash lab.sh integration
 ```
 
 Kết quả hiện đã xác minh:
 
 ```text
-Kết quả integration: 9 đạt, 0 lỗi.
+Kết quả integration: 11 đạt, 0 lỗi.
 ```
 
 Chạy toàn bộ nghiệp vụ không cần HTTP server:
@@ -332,7 +365,7 @@ bash lab.sh compare
 bash lab.sh extend
 ```
 
-`extend` chạy 20 unit, kiểm định 3 fixture, 9 integration, kiểm tra phương án stale I04 và hai tiến trình tranh chỗ I05.
+`extend` chạy 20 unit, kiểm định 3 fixture, 11 integration, kiểm tra quản lý hoạt động/ca, phương án stale I04 và hai tiến trình tranh chỗ I05.
 
 ## 10. Chạy website
 
@@ -603,24 +636,21 @@ php tools/configure.php migration
 php tools/configure.php app
 ```
 
-## 15. Kiểm thử nâng cao
+## 15. Kiểm thử tách biệt và có thể lặp lại
 
-Các kiểm thử thông thường:
+Mọi test có ghi dữ liệu đều đọc `app/.local/test-db.json`. `TestDatabase` sẽ từ chối schema không có hậu tố `_test` và từ chối đích danh `volunteer_app`.
+
+Sau khi cấu hình test ở mục 8.3, chạy:
 
 ```bash
 cd /home/lynn/project_6/app
+bash lab.sh test-prepare
 bash lab.sh test
 bash lab.sh integration
+bash lab.sh http-test
 ```
 
-Khi website đang chạy, có thể chạy HTTP smoke test trên **schema thử nghiệm riêng**:
-
-```bash
-APP_DB_CONFIG=/duong/dan/db-test.json \
-  bash lab.sh http-test http://127.0.0.1:8106
-```
-
-HTTP smoke test tạo một hoạt động tạm, kiểm tra trọn luồng hai vai trò rồi tự dọn đúng hoạt động tạm đó. Vẫn nên dùng schema test riêng khi phát triển nhóm.
+`http-test` tự khởi động một PHP server test riêng tại `127.0.0.1:18106`, gắn `APP_ENV=test`, kiểm tra header môi trường và tự dừng. Nó không dùng server demo cổng 8106 và không chạm schema ứng dụng. Có thể đổi cổng bằng `TEST_HTTP_PORT`, hoặc đổi đường dẫn cấu hình bằng `TEST_DB_CONFIG`.
 
 Các lệnh bổ sung:
 
@@ -632,29 +662,44 @@ bash lab.sh concurrency   # I05: hai tiến trình tranh một chỗ
 bash lab.sh extend        # toàn bộ kiểm tra nghiệp vụ không cần HTTP server
 ```
 
+Test HTTP còn kiểm tra security headers, quyền hai vai trò, khóa đăng nhập, sửa hoạt động/ca, HTML không có form lồng nhau và lưu bền qua nhiều request.
+
 Kết quả kiểm thử của quá trình triển khai nằm tại `docs/TEST_RESULTS.md`.
 
 ## 16. Cấu trúc chính của dự án
 
 ```text
 app/
-├── public/                     Giao diện, handler và tài nguyên cục bộ
-├── src/Allocation/              Snapshot, validator và hai thuật toán
-├── src/                         Xác thực và repository nghiệp vụ
-├── database/migrations/         Migration cộng dồn 001–002
-├── database/fixtures/generated/ Ba fixture chuẩn có hash
-├── tools/                       Configure, migrate, seed, compare
-├── tests/                       Unit, integration, HTTP, stale, concurrency
-├── .local/                      Cấu hình bí mật cục bộ, không đưa vào Git
-└── lab.sh                       Điểm chạy lệnh dự án
+├── public/                       Front controller, view và tài nguyên cục bộ
+├── src/Http/ActionController.php Xử lý và phân quyền các POST action
+├── src/Allocation/               Snapshot, validator và hai thuật toán
+├── src/                           Xác thực và repository nghiệp vụ
+├── database/migrations/           Migration cộng dồn 001–003 có checksum
+├── database/fixtures/generated/   Ba fixture chuẩn có hash
+├── tools/                         Configure, migrate, seed, compare
+├── tests/                         Unit, integration, HTTP, stale, concurrency
+├── .local/                        Cấu hình bí mật cục bộ, không đưa vào Git
+└── lab.sh                         Điểm chạy lệnh dự án
 ```
 
-## 17. Việc còn cần người sở hữu dự án hoàn tất
+## 17. Tạo gói phát hành
 
-- Tạo Git repository/commit và release thật; workspace hiện có `.git` rỗng nên không thể ghi commit giả.
+Phiên bản nằm trong `VERSION`. Công cụ chỉ đóng gói đúng nội dung đã commit ở `HEAD`, tự loại `.git`, `app/.local` và `release` vì các đường dẫn này không được Git theo dõi:
+
+```bash
+cd /home/lynn/project_6
+bash tools/package_release.sh
+sha256sum -c release/volunteerhub-0.3.0-demo.tar.gz.sha256
+tar -tzf release/volunteerhub-0.3.0-demo.tar.gz | head
+```
+
+Gói và checksum nằm trong `release/`, được `.gitignore` loại khỏi repository. Cài thử bằng cách giải nén vào thư mục mới, tạo schema test sạch, chạy `php tools/configure.php migration`, `php tools/configure.php app`, migration và seed theo các mục trên.
+
+## 18. Việc còn cần người sở hữu dự án hoàn tất
+
 - Ghi issue/review và bảng đóng góp theo thành viên thật; AI không tự tạo minh chứng đóng góp.
 - Dùng quyền quản trị MySQL cấp đúng quyền cho `volunteer_app`, rồi chạy lại `php tools/configure.php app`. Cấu hình PHP hiện vẫn xác thực bằng `volunteer_migrator`, hoạt động nhưng rộng quyền hơn khuyến nghị.
 - Mở Workbench và đối chiếu trực tiếp `@@server_uuid` với `bash lab.sh db-info`; server PHP hiện đã xác minh là cổng 3307/schema `volunteer_app`.
-- Thử cài release trên schema sạch riêng khi có quyền tạo schema test; không reset schema hiện có.
+- Tạo `volunteer_test` thật trên MySQL cổng 3307 và chạy lại toàn bộ test ở mục 15; phiên phát triển đã kiểm chứng trên MySQL cô lập nhưng tài khoản hiện tại chưa có quyền tạo schema mới trên server thật.
 
 Trạng thái hiện tại nằm trong `docs/STATE.md`; ma trận yêu cầu nằm trong `docs/REQUIREMENTS.md`.

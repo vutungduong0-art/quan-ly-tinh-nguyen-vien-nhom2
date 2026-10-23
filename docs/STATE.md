@@ -1,14 +1,15 @@
 # Trạng thái dự án
 
-- Cập nhật lúc: 2026-10-23 11:43 UTC.
-- Nhánh và commit: workspace chưa phải Git repository hợp lệ; `.git` rỗng, không có commit để ghi nhận.
-- Giai đoạn hiện tại: đã triển khai và kiểm chứng phần mã G00–G10; G11 hoàn tất tài liệu chạy/demo nhưng chưa thể tạo release/commit/issue/review hoặc đóng góp thành viên thật.
-- Phạm vi phiên: hoàn thiện các phần còn lại của Đề tài 6 từ checkpoint demo, không clone hoặc reset dữ liệu hiện có.
-- Đã hoàn thành: F01–F05, T01–T02, D01, S01 và kiểm tra quyền ứng dụng của S02; migration `002_full_project.sql`; 30 tài khoản tình nguyện viên; hai thuật toán; snapshot/hash/revision; chỉnh tay; xác nhận; vắng/thay; thống kê; CSV; audit; giao diện responsive.
-- MySQL đã xác minh: host `Lynn`, port `3307`, schema `volunteer_app`, server UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`, MySQL `8.4.11`; migration 001–002 áp dụng và seed chạy thành công.
-- Kết quả thuật toán: xem `artifacts/comparison/`; cả 6 lượt có 0 vi phạm. Cải tiến có chênh tải 1 trên cả ba fixture; baseline lần lượt 12, 12 và 6.
-- Test gần nhất: `bash lab.sh extend` đạt 20 unit + 3 fixture + 9 integration + I04 + I05; HTTP `27 đạt, 0 lỗi`; PHP lint sạch; mã thoát đều 0. Dữ liệu HTTP tạm đã tự dọn.
-- Cách chạy đã xác minh: `cd /home/lynn/project_6/app && bash lab.sh run`; URL `http://127.0.0.1:8106`.
-- Cấu hình riêng: `app/.local/db.json` và `app/.local/migration-db.json`, đã ignore; không ghi nội dung bí mật vào tài liệu.
-- Vấn đề còn lại: PHP hiện đăng nhập MySQL bằng `volunteer_migrator` có ALL trên riêng schema; cần quản trị viên cấp quyền và cấu hình lại `volunteer_app` để đạt quyền tối thiểu. Workbench chưa được người dùng đối chiếu trực tiếp. Chưa có Git/release/schema sạch/issue-review/dữ liệu đóng góp thật.
-- Next action: người dùng cấp `SELECT, INSERT, UPDATE, DELETE` trên `volunteer_app.*` cho `'volunteer_app'@'localhost'`, chạy `php tools/configure.php app`, rồi xác nhận `bash lab.sh db-info` in ra `authenticated_user = volunteer_app@localhost` và đối chiếu cùng UUID trong Workbench.
+- Cập nhật lúc: 2026-10-23 16:45 UTC.
+- Git: nhánh `lab05`, HEAD trước lần bàn giao này là `e603ac3`, remote `origin` do người dùng cấu hình. Đang có thay đổi của mốc `0.3.0-demo` chờ commit/tag sau kiểm thử cuối; không tự push.
+- Giai đoạn: đã triển khai G00–G10 và chuẩn bị G11. Đây vẫn là bản demo học phần, không phải hệ thống production.
+- Chức năng: F01–F05, hai thuật toán, snapshot/hash/revision, chỉnh tay, xác nhận, vắng/thay, thống kê, CSV và audit đều đã nối MySQL.
+- Tám cải tiến mới: sửa/đóng hoạt động; sửa/xóa ca có bảo vệ; schema test tách biệt; kiểm tra quyền MySQL tối thiểu; sửa form lồng nhau; MIT/VERSION/đóng gói release; tách POST sang `ActionController`; gia cố đăng nhập/session/security headers.
+- Migration: `001_demo_core.sql`, `002_full_project.sql`, `003_hardening.sql`; `schema_migrations` lưu SHA-256 và từ chối migration cũ bị sửa.
+- MySQL ứng dụng đã xác minh: host `Lynn`, port `3307`, schema `volunteer_app`, server UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`, MySQL `8.4.11`. Không xóa/reset schema này.
+- Kiểm thử ghi dữ liệu chỉ chạy với cấu hình `app/.local/test-db.json`; guard từ chối `volunteer_app` và schema không có hậu tố `_test`. HTTP test tự mở server test cổng 18106.
+- Kết quả gần nhất trên MySQL cô lập/schema `volunteer_test`: 20 unit, 3 fixture, 11 integration, quản lý hoạt động/ca, I04 stale và I05 concurrency đều đạt; HTTP 28/28 đạt; PHP lint sạch; migration/seed chạy lại idempotent.
+- Kết quả kiểm tra server thật: mã/migration/PHP đạt; kết nối đúng server/schema; kiểm tra chủ động thất bại vì `app/.local/db.json` vẫn dùng tài khoản có `ALL PRIVILEGES`. Đây là lỗi cấu hình môi trường còn mở, không phải PASS.
+- Cấu hình bí mật: `app/.local/db.json`, `migration-db.json`, `test-db.json`; đều bị ignore và không thuộc gói release.
+- Việc còn cần thao tác quản trị: tạo/cấp đúng quyền cho `volunteer_app@localhost`, tạo `volunteer_test`, chạy `configure.php app|test`, rồi chạy lại `check`, `test-prepare`, `extend`, `http-test` trên MySQL cổng 3307.
+- Việc còn cần bằng chứng con người: issue/review và bảng đóng góp thành viên thật; không tạo giả.

@@ -1,5 +1,22 @@
 # Kết quả kiểm thử
 
+## Phiên 23/10/2026 16:41 UTC — tám cải tiến
+
+Môi trường test: PHP 8.5.4 với `mysqli`/`mysqlnd`; MySQL 8.4.11 cô lập tại `127.0.0.1:33307`; schema bắt buộc `volunteer_test`. Cấu hình tạm và data directory nằm trong `app/.local/`, không được theo dõi/đóng gói và được dọn sau khi kiểm tra.
+
+| Lệnh/nhóm | Kết quả thực tế | Mã thoát |
+| --- | --- | --- |
+| PHP lint toàn bộ `app/src`, `public`, `tools`, `tests` | Không có lỗi cú pháp | 0 |
+| `bash lab.sh test-prepare` chạy hai lần | 001–003 có checksum hợp lệ; seed idempotent | 0 |
+| `bash lab.sh extend` | 20 unit + 3 fixture + 11 integration + quản lý event/shift + I04 + I05 đạt | 0 |
+| `bash lab.sh http-test` | 28 đạt, 0 lỗi; server test riêng 18106; dữ liệu tạm tự dọn | 0 |
+| `bash lab.sh integration` khi thiếu `test-db.json` | Từ chối chạy, không rơi về DB ứng dụng | 1 mong đợi |
+| `bash lab.sh check` trên MySQL thật 3307 | Mã/PHP/migration/server/schema đạt; từ chối tài khoản web có DDL/ALL | 1 mong đợi |
+
+Các kiểm thử mới bao phủ: sửa/đóng hoạt động; sửa/xóa ca an toàn; chặn thao tác khi có phân công; audit/revision; khóa đăng nhập sau 5 lần sai; tài khoản bị vô hiệu hóa làm session cũ mất hiệu lực; security header/môi trường; không còn form HTML lồng nhau; test DB fail-closed.
+
+Kết quả `check` trên server thật không được ghi là PASS: cần đổi `app/.local/db.json` sang `volunteer_app@localhost` chỉ có `SELECT, INSERT, UPDATE, DELETE`.
+
 ## Phiên 23/10/2026 UTC — hoàn thiện G00–G10
 
 Môi trường thực: PHP 8.5.4 với `mysqli`/`mysqlnd`; MySQL 8.4.11; host `Lynn`; port `3307`; schema `volunteer_app`; server UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`.
@@ -33,6 +50,6 @@ Tỷ lệ lấp vị trí tương ứng: 100%, 94.44%, 100% ở cả hai thuật
 
 ## Chưa được ghi là PASS
 
-- Chưa thử cài từ release vào schema sạch riêng vì chưa có Git/release và quyền tạo schema test.
+- Chưa thử cài tar.gz release vào schema sạch trên MySQL server thật vì chưa có quyền tạo `volunteer_test` tại cổng 3307.
 - Chưa đối chiếu trực tiếp trong giao diện Workbench; chỉ đã có UUID/port/schema phía PHP để người dùng so sánh.
 - Tài khoản DB của web vẫn là migrator; xem `KNOWN_ISSUES.md`.
