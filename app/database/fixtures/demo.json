@@ -1,0 +1,10 @@
+{
+  "name": "DEMO_TIEN_DO_v1",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "description": "Ba hoạt động, năm kỹ năng và ba tình nguyện viên phục vụ mốc demo giao diện và đăng ký.",
+  "accounts": ["dieuphoi", "tinhnguyen", "tinhnguyen02", "tinhnguyen03"],
+  "activities": 3,
+  "skills": 5,
+  "scope_note": "Không phải ba fixture 30/12/5 dùng chấm thuật toán ở giai đoạn sau."
+}
+
