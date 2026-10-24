@@ -91,3 +91,12 @@
 - Push nhánh/tag thất bại vì terminal không có credential HTTPS. `sudo -n` cũng xác nhận chưa có phiên quản trị được cache, nên không thể tự tạo MySQL user/schema ngoài quyền hiện có.
 - Sau khi người dùng tạo/cấu hình tài khoản, xác minh `volunteer_app@localhost` đạt quyền tối thiểu và `volunteer_test@localhost` trỏ đúng cổng 3307/UUID. `test-prepare`, toàn bộ `extend` và HTTP 45/45 đều đạt trên server đích.
 - Xác minh tag `v0.4.0-demo` đã có trên GitHub và trỏ release commit `7bc0b1f`; giữ nguyên tag công khai, không force-update. Terminal agent vẫn thiếu credential để push commit kết quả kiểm thử sau phát hành.
+
+## 2026-10-24 — Tạo issue, pull request và GitHub pre-release
+
+- Xác minh `origin/lab05` đã khớp commit `3b09bcf`; `main` vẫn ở commit nền và tag `v0.4.0-demo` trỏ đúng release commit `7bc0b1f`.
+- Đăng nhập GitHub CLI bằng device flow với tài khoản `lynnwinters0211`; credential chỉ lưu trong `/tmp`, không đưa token vào repository hoặc hội thoại.
+- Tạo issue bàn giao [#1](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/issues/1) và PR [#2](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/pull/2) từ `lab05` vào `main`.
+- Xác minh PR #2 ở trạng thái mở và mergeable; gửi yêu cầu review đến hai collaborator khác là `DngOsea` và `vutungduong0-art`. Chưa merge vì chưa có review thật.
+- Tạo GitHub pre-release [`v0.4.0-demo`](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/releases/tag/v0.4.0-demo); tải lên `volunteerhub-0.4.0-demo.tar.gz` (872.705 byte) và checksum SHA-256 (126 byte), sau khi kiểm tra checksum local đạt.
+- Cập nhật hồ sơ trạng thái/đóng góp/vấn đề tồn tại bằng liên kết thật. Ánh xạ họ tên/MSSV vẫn để trống vì chưa được nhóm cung cấp; không suy đoán dữ liệu cá nhân.
