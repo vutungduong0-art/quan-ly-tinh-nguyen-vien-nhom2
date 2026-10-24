@@ -98,5 +98,5 @@
 - Đăng nhập GitHub CLI bằng device flow với tài khoản `lynnwinters0211`; credential chỉ lưu trong `/tmp`, không đưa token vào repository hoặc hội thoại.
 - Tạo issue bàn giao [#1](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/issues/1) và PR [#2](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/pull/2) từ `lab05` vào `main`.
 - Xác minh PR #2 ở trạng thái mở và mergeable; gửi yêu cầu review đến hai collaborator khác là `DngOsea` và `vutungduong0-art`. Chưa merge vì chưa có review thật.
-- Tạo GitHub pre-release [`v0.4.0-demo`](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/releases/tag/v0.4.0-demo); tải lên `volunteerhub-0.4.0-demo.tar.gz` (872.705 byte) và checksum SHA-256 (126 byte), sau khi kiểm tra checksum local đạt.
+- Tạo GitHub pre-release [`v0.4.0-demo`](https://github.com/vutungduong0-art/quan-ly-tinh-nguyen-vien-nhom2/releases/tag/v0.4.0-demo); tải lên `volunteerhub-0.4.0-demo.tar.gz` (872.705 byte) và checksum SHA-256 (97 byte), sau khi kiểm tra checksum local đạt. Checksum dùng tên tệp tương đối để chạy được sau khi tải về thư mục bất kỳ.
 - Cập nhật hồ sơ trạng thái/đóng góp/vấn đề tồn tại bằng liên kết thật. Ánh xạ họ tên/MSSV vẫn để trống vì chưa được nhóm cung cấp; không suy đoán dữ liệu cá nhân.
