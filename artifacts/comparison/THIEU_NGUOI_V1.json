@@ -1,0 +1,770 @@
+{
+    "baseline": {
+        "algorithm": "registration_order",
+        "algorithm_version": "1.0.0",
+        "assignments": [
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-12 17:00:00",
+                "fixed": false,
+                "shift_id": 12,
+                "start_at": "2027-01-12 15:00:00",
+                "volunteer_id": 1
+            }
+        ],
+        "config": {
+            "shift_order": "start_at,id",
+            "volunteer_order": "registered_at,id"
+        },
+        "metrics": {
+            "filled_position_rate": 94.44,
+            "filled_positions": 34,
+            "full_shift_rate": 91.67,
+            "full_shifts": 11,
+            "load_gap": 12,
+            "required_positions": 36,
+            "shortages": [
+                {
+                    "assigned_count": 1,
+                    "end_at": "2027-01-12 17:00:00",
+                    "missing": 2,
+                    "name": "Ngày 3 - Ca 4",
+                    "required_count": 3,
+                    "shift_id": 12,
+                    "skill_ids": [
+                        1
+                    ],
+                    "start_at": "2027-01-12 15:00:00"
+                }
+            ],
+            "total_shifts": 12,
+            "violation_count": 0,
+            "volunteer_loads": {
+                "1": 12,
+                "10": 0,
+                "11": 0,
+                "12": 0,
+                "13": 0,
+                "14": 0,
+                "15": 0,
+                "16": 0,
+                "17": 0,
+                "18": 0,
+                "19": 0,
+                "2": 11,
+                "20": 0,
+                "21": 0,
+                "22": 0,
+                "23": 0,
+                "24": 0,
+                "25": 0,
+                "26": 0,
+                "27": 0,
+                "28": 0,
+                "29": 11,
+                "3": 0,
+                "30": 0,
+                "4": 0,
+                "5": 0,
+                "6": 0,
+                "7": 0,
+                "8": 0,
+                "9": 0
+            }
+        },
+        "unassigned_volunteers": [
+            {
+                "name": "Tình nguyện viên 03",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 3
+            },
+            {
+                "name": "Tình nguyện viên 04",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 4
+            },
+            {
+                "name": "Tình nguyện viên 05",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 5
+            },
+            {
+                "name": "Tình nguyện viên 06",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 6
+            },
+            {
+                "name": "Tình nguyện viên 07",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 7
+            },
+            {
+                "name": "Tình nguyện viên 08",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 8
+            },
+            {
+                "name": "Tình nguyện viên 09",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 9
+            },
+            {
+                "name": "Tình nguyện viên 10",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 10
+            },
+            {
+                "name": "Tình nguyện viên 11",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 11
+            },
+            {
+                "name": "Tình nguyện viên 12",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 12
+            },
+            {
+                "name": "Tình nguyện viên 13",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 13
+            },
+            {
+                "name": "Tình nguyện viên 14",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 14
+            },
+            {
+                "name": "Tình nguyện viên 15",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 15
+            },
+            {
+                "name": "Tình nguyện viên 16",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 16
+            },
+            {
+                "name": "Tình nguyện viên 17",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 17
+            },
+            {
+                "name": "Tình nguyện viên 18",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 18
+            },
+            {
+                "name": "Tình nguyện viên 19",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 19
+            },
+            {
+                "name": "Tình nguyện viên 20",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 20
+            },
+            {
+                "name": "Tình nguyện viên 21",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 21
+            },
+            {
+                "name": "Tình nguyện viên 22",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 22
+            },
+            {
+                "name": "Tình nguyện viên 23",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 23
+            },
+            {
+                "name": "Tình nguyện viên 24",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 24
+            },
+            {
+                "name": "Tình nguyện viên 25",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 25
+            },
+            {
+                "name": "Tình nguyện viên 26",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 26
+            },
+            {
+                "name": "Tình nguyện viên 27",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 27
+            },
+            {
+                "name": "Tình nguyện viên 28",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 28
+            },
+            {
+                "name": "Tình nguyện viên 30",
+                "reason": "Các ca phù hợp đã đủ số người cần",
+                "volunteer_id": 30
+            }
+        ],
+        "validation": {
+            "count": 0,
+            "valid": true,
+            "violations": []
+        }
+    },
+    "dataset": {
+        "code": "THIEU_NGUOI_V1",
+        "description": "Thiếu nguồn lực: ca cuối cần sơ cứu nhưng chỉ một người có kỹ năng.",
+        "seed": 62027,
+        "timezone": "Asia/Ho_Chi_Minh",
+        "version": "1.0.0"
+    },
+    "generated_at": "2026-10-23T17:15:27+00:00",
+    "improved": {
+        "algorithm": "scarcity_balanced",
+        "algorithm_version": "1.0.0",
+        "assignments": [
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 11
+            },
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 22
+            },
+            {
+                "end_at": "2027-01-10 10:00:00",
+                "fixed": false,
+                "shift_id": 1,
+                "start_at": "2027-01-10 08:00:00",
+                "volunteer_id": 29
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 12
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 23
+            },
+            {
+                "end_at": "2027-01-10 12:00:00",
+                "fixed": false,
+                "shift_id": 2,
+                "start_at": "2027-01-10 10:00:00",
+                "volunteer_id": 2
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 13
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 24
+            },
+            {
+                "end_at": "2027-01-10 15:00:00",
+                "fixed": false,
+                "shift_id": 3,
+                "start_at": "2027-01-10 13:00:00",
+                "volunteer_id": 30
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 14
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 25
+            },
+            {
+                "end_at": "2027-01-10 17:00:00",
+                "fixed": false,
+                "shift_id": 4,
+                "start_at": "2027-01-10 15:00:00",
+                "volunteer_id": 3
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 15
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 26
+            },
+            {
+                "end_at": "2027-01-11 10:00:00",
+                "fixed": false,
+                "shift_id": 5,
+                "start_at": "2027-01-11 08:00:00",
+                "volunteer_id": 4
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 16
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 27
+            },
+            {
+                "end_at": "2027-01-11 12:00:00",
+                "fixed": false,
+                "shift_id": 6,
+                "start_at": "2027-01-11 10:00:00",
+                "volunteer_id": 5
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 17
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 28
+            },
+            {
+                "end_at": "2027-01-11 15:00:00",
+                "fixed": false,
+                "shift_id": 7,
+                "start_at": "2027-01-11 13:00:00",
+                "volunteer_id": 6
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 18
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 7
+            },
+            {
+                "end_at": "2027-01-11 17:00:00",
+                "fixed": false,
+                "shift_id": 8,
+                "start_at": "2027-01-11 15:00:00",
+                "volunteer_id": 8
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 19
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 8
+            },
+            {
+                "end_at": "2027-01-12 10:00:00",
+                "fixed": false,
+                "shift_id": 9,
+                "start_at": "2027-01-12 08:00:00",
+                "volunteer_id": 9
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 10
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 20
+            },
+            {
+                "end_at": "2027-01-12 12:00:00",
+                "fixed": false,
+                "shift_id": 10,
+                "start_at": "2027-01-12 10:00:00",
+                "volunteer_id": 9
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 10
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 1
+            },
+            {
+                "end_at": "2027-01-12 15:00:00",
+                "fixed": false,
+                "shift_id": 11,
+                "start_at": "2027-01-12 13:00:00",
+                "volunteer_id": 21
+            },
+            {
+                "end_at": "2027-01-12 17:00:00",
+                "fixed": false,
+                "shift_id": 12,
+                "start_at": "2027-01-12 15:00:00",
+                "volunteer_id": 1
+            }
+        ],
+        "config": {
+            "deterministic": true,
+            "max_repair_iterations": 100,
+            "shift_priority": "eligible/remaining,eligible_count,start_at,id",
+            "volunteer_priority": "load,opportunities,registered_at,id"
+        },
+        "metrics": {
+            "filled_position_rate": 94.44,
+            "filled_positions": 34,
+            "full_shift_rate": 91.67,
+            "full_shifts": 11,
+            "load_gap": 1,
+            "required_positions": 36,
+            "shortages": [
+                {
+                    "assigned_count": 1,
+                    "end_at": "2027-01-12 17:00:00",
+                    "missing": 2,
+                    "name": "Ngày 3 - Ca 4",
+                    "required_count": 3,
+                    "shift_id": 12,
+                    "skill_ids": [
+                        1
+                    ],
+                    "start_at": "2027-01-12 15:00:00"
+                }
+            ],
+            "total_shifts": 12,
+            "violation_count": 0,
+            "volunteer_loads": {
+                "1": 2,
+                "10": 2,
+                "11": 1,
+                "12": 1,
+                "13": 1,
+                "14": 1,
+                "15": 1,
+                "16": 1,
+                "17": 1,
+                "18": 1,
+                "19": 1,
+                "2": 1,
+                "20": 1,
+                "21": 1,
+                "22": 1,
+                "23": 1,
+                "24": 1,
+                "25": 1,
+                "26": 1,
+                "27": 1,
+                "28": 1,
+                "29": 1,
+                "3": 1,
+                "30": 1,
+                "4": 1,
+                "5": 1,
+                "6": 1,
+                "7": 1,
+                "8": 2,
+                "9": 2
+            }
+        },
+        "unassigned_volunteers": [],
+        "validation": {
+            "count": 0,
+            "valid": true,
+            "violations": []
+        }
+    },
+    "project_version": "0.4.0-demo",
+    "snapshot_sha256": "d3c3faa267ad613b7ffd866d3ca2f8d09a013e2ee11b0fc0c32ee7f69ca1ea82"
+}

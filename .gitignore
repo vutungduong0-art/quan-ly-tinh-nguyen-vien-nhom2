@@ -1,0 +1,6 @@
+app/.local/
+*.log
+.DS_Store
+.agents/
+.codex/
+release/
