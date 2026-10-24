@@ -7,6 +7,7 @@
 - `php app/tools/db_info.php` ngoài sandbox: kết nối đúng MySQL 8.4.11, cổng 3307, schema `volunteer_app`, UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`.
 - `php app/tools/check.php`: phần mã/migration/thuật toán/fixture và kết nối đạt, nhưng tổng thể trả mã 1 đúng thiết kế vì tài khoản web đang có DDL/ALL.
 - Chưa chạy integration/HTTP trên server 3307 vì `volunteer_test` chưa tồn tại và tài khoản hiện tại không có quyền tạo schema; không chạy test ghi dữ liệu trên `volunteer_app`.
+- Gói `release/volunteerhub-0.4.0-demo.tar.gz` tạo từ commit `7bc0b1f`: checksum `2afcef9499233b9cc03fcec33b4333250374cfdea71fa5da0f128126fdf0ce69`; kiểm tra cấu trúc đạt, bản giải nén chạy 21 unit và 3 fixture đạt.
 
 ## Phiên 23/10/2026 18:45 UTC — Open Sans cục bộ
 

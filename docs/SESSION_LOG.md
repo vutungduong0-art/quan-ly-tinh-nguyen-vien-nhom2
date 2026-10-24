@@ -87,3 +87,5 @@
 - Xác minh MySQL thật là 8.4.11, `127.0.0.1:3307`, schema `volunteer_app`, UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`; `check` vẫn từ chối vì app đang dùng `volunteer_migrator` có DDL/ALL.
 - `SHOW GRANTS` xác nhận tài khoản migration chỉ có `ALL` trên `volunteer_app.*` và không có quyền tạo `volunteer_test`; không thử vượt quyền hoặc yêu cầu người dùng gửi mật khẩu.
 - Kiểm tra repository công khai: README đã được đẩy ở commit `378fa5d`, nhưng chưa có issue/PR. Bổ sung hồ sơ đóng góp từ Git thật, mẫu issue/PR và release notes 0.4.0.
+- Tạo commit bàn giao `7bc0b1f`, annotated tag local `v0.4.0-demo`, tar.gz 853 KiB và checksum SHA-256; kiểm tra gói không chứa `.git`/`.local`/`release`, bản giải nén đạt 21 unit và 3 fixture.
+- Push nhánh/tag thất bại vì terminal không có credential HTTPS. `sudo -n` cũng xác nhận chưa có phiên quản trị được cache, nên không thể tự tạo MySQL user/schema ngoài quyền hiện có.

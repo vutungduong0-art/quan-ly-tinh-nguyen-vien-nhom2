@@ -1,7 +1,7 @@
 # Trạng thái dự án
 
-- Cập nhật lúc: 2026-10-24 00:58 UTC.
-- Nhánh và commit: `lab05`, HEAD `378fa5d` đã khớp `origin/lab05`; tài liệu bàn giao và mẫu quy trình đang có thay đổi chưa commit. Tệp `Đề tài 6.docx` của người dùng vẫn untracked và không bị sửa.
+- Cập nhật lúc: 2026-10-24 01:00 UTC.
+- Nhánh và commit: `lab05`; release commit `7bc0b1f` gắn tag local `v0.4.0-demo`, đang đi trước `origin/lab05` một commit. Tệp `Đề tài 6.docx` của người dùng vẫn untracked và không bị sửa.
 - Giai đoạn hiện tại: đã triển khai G00–G10 và chuẩn bị bàn giao G11. Đây là demo học phần, không phải production.
 - Phạm vi phiên: hoàn thiện các phần bàn giao ngoài năm chức năng Mục 2: môi trường MySQL, kiểm thử cuối, release và minh chứng quy trình nhóm.
 - Đã hoàn thành: tự đăng ký với validation/password hash/role cố định; unique email; menu riêng cho khách/volunteer/coordinator; route điều phối giữ kiểm tra 403; hồ sơ điều phối trong modal; footer có phiên bản/năm/múi giờ; toàn bộ giao diện dùng Open Sans cục bộ. Các luồng vận hành 0.4 trước đó vẫn giữ nguyên.
@@ -12,4 +12,4 @@
 - MySQL ứng dụng: `127.0.0.1:3307`, schema `volunteer_app`; migration 001–005 đã áp dụng.
 - Lỗi/công việc ngoài mã: đã xác minh MySQL thật cổng 3307/schema `volunteer_app`/UUID đúng, nhưng web vẫn xác thực bằng `volunteer_migrator` có `ALL`; `volunteer_test` chưa tồn tại. Workbench GUI, issue/review và ánh xạ thành viên cần thao tác/xác nhận thật của người dùng/nhóm.
 - Cách chạy sau khi cấu hình: `cd /home/lynn/project_6/app && bash lab.sh migrate && bash lab.sh seed && bash lab.sh check && bash lab.sh run`; website `http://127.0.0.1:8106`.
-- Next action: commit tài liệu bàn giao, tạo tag/gói `0.4.0-demo`, rồi người quản trị MySQL tạo tài khoản web quyền tối thiểu và schema `volunteer_test` để chạy kiểm thử trên đúng server 3307.
+- Next action: người dùng đăng nhập GitHub cho terminal để push nhánh/tag; đồng thời dùng quyền quản trị MySQL tạo tài khoản web quyền tối thiểu và schema `volunteer_test`, sau đó agent chạy lại toàn bộ test trên server 3307.

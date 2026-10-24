@@ -44,7 +44,7 @@ Thuật toán cải tiến là heuristic tham lam kèm sửa cục bộ tối đ
 
 ## Phần bàn giao 0.4.0 còn cần đồng bộ
 
-- Nội dung release `0.4.0-demo` và công cụ tạo tar.gz/checksum đã sẵn sàng; tag/gói cần được tạo lại từ commit cuối sau khi các tài liệu phiên này được commit.
+- Tag local `v0.4.0-demo` và gói/checksum đã được tạo từ commit `7bc0b1f`; bản giải nén chạy lại unit/fixture thành công. Terminal agent chưa có credential HTTPS nên commit/tag chưa đẩy được lên GitHub.
 - `comparison_group` bảo đảm hai thuật toán dùng cùng snapshot trong ứng dụng; công cụ fixture vẫn sinh artifact độc lập và ghi phiên bản mã, không ghi commit Git khi cây làm việc chưa commit.
 
 ## Giới hạn đăng ký tài khoản trong bản demo
