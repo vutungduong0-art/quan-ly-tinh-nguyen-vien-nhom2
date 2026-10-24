@@ -74,3 +74,16 @@
 - Đóng gói Open Sans variable normal/italic từ kho Google Fonts trong `public/assets/fonts/open-sans`, kèm nguyên văn giấy phép SIL OFL 1.1; không dùng CDN.
 - Thêm hai khai báo `@font-face` weight 300–800 và đổi body, tiêu đề, số liệu, ngày cùng trạng thái rỗng từ Inter/Georgia sang Open Sans; input/button tiếp tục kế thừa font chung.
 - Xác minh hai TTF hợp lệ, có bộ ký tự tiếng Việt và được server `127.0.0.1:8106` trả HTTP 200 với `Content-Type: font/ttf`; CSP `default-src 'self'` cho phép tải font cùng origin.
+
+## 2026-10-24 — Rút gọn README cho người nhận mã nguồn
+
+- Viết lại README từ 714 xuống 203 dòng, ưu tiên luồng cài đặt dễ theo dõi: yêu cầu, tạo schema/tài khoản, cấu hình, migration, seed và chạy website.
+- Giữ tài khoản demo, kiểm thử với schema `_test`, kết nối Workbench, lỗi thường gặp, cấu trúc dự án và liên kết đến tài liệu chi tiết.
+- Không thay đổi mã ứng dụng, cơ sở dữ liệu hoặc cấu hình bí mật; chưa chạy lại test nghiệp vụ vì đây chỉ là thay đổi tài liệu.
+
+## 2026-10-24 — Hoàn thiện bàn giao ngoài Mục 2
+
+- Đọc trực tiếp Mục 2 của `Đề tài 6.docx` và đối chiếu mã/test: cả năm chức năng đã tích hợp; chạy lại 21 unit và 3 fixture đều đạt.
+- Xác minh MySQL thật là 8.4.11, `127.0.0.1:3307`, schema `volunteer_app`, UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`; `check` vẫn từ chối vì app đang dùng `volunteer_migrator` có DDL/ALL.
+- `SHOW GRANTS` xác nhận tài khoản migration chỉ có `ALL` trên `volunteer_app.*` và không có quyền tạo `volunteer_test`; không thử vượt quyền hoặc yêu cầu người dùng gửi mật khẩu.
+- Kiểm tra repository công khai: README đã được đẩy ở commit `378fa5d`, nhưng chưa có issue/PR. Bổ sung hồ sơ đóng góp từ Git thật, mẫu issue/PR và release notes 0.4.0.

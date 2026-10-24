@@ -197,6 +197,7 @@ Tài liệu chi tiết:
 - [Kết quả kiểm thử](docs/TEST_RESULTS.md)
 - [Yêu cầu và mức độ hoàn thành](docs/REQUIREMENTS.md)
 - [Các vấn đề đã biết](docs/KNOWN_ISSUES.md)
+- [Minh chứng đóng góp](docs/CONTRIBUTIONS.md)
 
 ## Giấy phép
 

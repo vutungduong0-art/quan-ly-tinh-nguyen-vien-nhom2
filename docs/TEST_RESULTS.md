@@ -1,5 +1,13 @@
 # Kết quả kiểm thử
 
+## Phiên 24/10/2026 00:58 UTC — rà soát bàn giao
+
+- `php app/tests/run.php`: 21 đạt, 0 lỗi; mã thoát 0.
+- `php app/tools/validate_fixtures.php`: cả ba fixture `DU_NGUOI_V1`, `THIEU_NGUOI_V1`, `TRUNG_LICH_V1` đạt và giữ nguyên SHA-256; mã thoát 0.
+- `php app/tools/db_info.php` ngoài sandbox: kết nối đúng MySQL 8.4.11, cổng 3307, schema `volunteer_app`, UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`.
+- `php app/tools/check.php`: phần mã/migration/thuật toán/fixture và kết nối đạt, nhưng tổng thể trả mã 1 đúng thiết kế vì tài khoản web đang có DDL/ALL.
+- Chưa chạy integration/HTTP trên server 3307 vì `volunteer_test` chưa tồn tại và tài khoản hiện tại không có quyền tạo schema; không chạy test ghi dữ liệu trên `volunteer_app`.
+
 ## Phiên 23/10/2026 18:45 UTC — Open Sans cục bộ
 
 - Hai variable TTF tải từ nguồn chính thức được `file` nhận đúng là TrueType có chữ ký và metadata Open Sans; bản normal 532.636 byte, italic 583.992 byte.
