@@ -1,5 +1,19 @@
 # Kết quả kiểm thử
 
+## Phiên 24/10/2026 01:14 UTC — xác minh trên MySQL server đích
+
+Môi trường: PHP 8.5.4; MySQL 8.4.11 tại `127.0.0.1:3307`; UUID `0e47d81a-cb0f-11f1-8097-00155d38bf23`; ứng dụng dùng `volunteer_app`, kiểm thử dùng schema/user `volunteer_test` riêng.
+
+| Lệnh/nhóm | Kết quả thực tế | Mã thoát |
+| --- | --- | --- |
+| `bash lab.sh db-info` | `volunteer_app@localhost`, schema `volunteer_app`, đúng cổng/UUID | 0 |
+| `bash lab.sh check` | PHP, extension, migration, thuật toán, fixture, MySQL và quyền tối thiểu đều đạt | 0 |
+| `bash lab.sh test-prepare` | Áp dụng migration 001–005 và seed trên `volunteer_test` | 0 |
+| `bash lab.sh extend` | 21 unit + 3 fixture + 13 integration + event/shift + I04 + I05 + workflow mở rộng đạt | 0 |
+| `bash lab.sh http-test` | 45 đạt, 0 lỗi; dữ liệu HTTP tạm tự dọn | 0 |
+
+Không có test ghi dữ liệu nào chạy trên `volunteer_app`.
+
 ## Phiên 24/10/2026 00:58 UTC — rà soát bàn giao
 
 - `php app/tests/run.php`: 21 đạt, 0 lỗi; mã thoát 0.

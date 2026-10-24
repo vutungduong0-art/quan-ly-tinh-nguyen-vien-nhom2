@@ -13,8 +13,8 @@ Trạng thái ngày 23/10/2026 dựa trên mã và kiểm thử thực tế, kh�
 | T02 | Đạt | `lab.sh compare`, 2 thuật toán × 3 snapshot; đủ tỷ lệ ca, vi phạm, chênh tải |
 | D01 | Đạt | Ba fixture đúng 30 người/12 ca/5 kỹ năng, có `expected`, phiên bản, seed, hash |
 | S01 | Đạt | `dataset_versions`, snapshot JSON, SHA-256, config/version thuật toán, phiên bản mã, nhóm A/B cùng snapshot và run assignments |
-| S02 | Đạt phần mã, chờ cấu hình | Role/ownership/CSRF/giao dịch, rate limit, session/header đạt; tự đăng ký luôn ép role volunteer, mật khẩu băm và email unique; tool từ chối tài khoản web có DDL/ALL; server thật chưa được đổi khỏi migrator |
-| Q01 | Đạt trên DB test cô lập | 21 unit, 3 fixture, 13 integration, quản lý event/shift, I04, I05, workflow mở rộng có rollback/trạng thái biên và 45 HTTP; guard test DB đạt |
+| S02 | Đạt | Role/ownership/CSRF/giao dịch, rate limit, session/header đạt; tự đăng ký ép role volunteer, mật khẩu băm/email unique; server thật dùng `volunteer_app` chỉ có SELECT/INSERT/UPDATE/DELETE |
+| Q01 | Đạt trên server đích | MySQL cổng 3307/schema `volunteer_test`: 21 unit, 3 fixture, 13 integration, event/shift, I04, I05, workflow mở rộng và 45 HTTP đều đạt; guard test DB đạt |
 | H01 | Đạt kỹ thuật, thiếu review thật | Git/remote, MIT, VERSION, tài liệu, tar.gz/checksum và cài sạch release đã đạt; đã thêm mẫu issue/PR nhưng GitHub hiện chưa có issue hoặc pull request/review thật |
 | C01 | Có bằng chứng Git, chờ nhóm xác nhận | `docs/CONTRIBUTIONS.md` tổng hợp định danh, commit và phần việc từ lịch sử Git; còn cần ánh xạ họ tên/MSSV và xác nhận phần vấn đáp của thành viên thật |
 

@@ -89,3 +89,5 @@
 - Kiểm tra repository công khai: README đã được đẩy ở commit `378fa5d`, nhưng chưa có issue/PR. Bổ sung hồ sơ đóng góp từ Git thật, mẫu issue/PR và release notes 0.4.0.
 - Tạo commit bàn giao `7bc0b1f`, annotated tag local `v0.4.0-demo`, tar.gz 853 KiB và checksum SHA-256; kiểm tra gói không chứa `.git`/`.local`/`release`, bản giải nén đạt 21 unit và 3 fixture.
 - Push nhánh/tag thất bại vì terminal không có credential HTTPS. `sudo -n` cũng xác nhận chưa có phiên quản trị được cache, nên không thể tự tạo MySQL user/schema ngoài quyền hiện có.
+- Sau khi người dùng tạo/cấu hình tài khoản, xác minh `volunteer_app@localhost` đạt quyền tối thiểu và `volunteer_test@localhost` trỏ đúng cổng 3307/UUID. `test-prepare`, toàn bộ `extend` và HTTP 45/45 đều đạt trên server đích.
+- Xác minh tag `v0.4.0-demo` đã có trên GitHub và trỏ release commit `7bc0b1f`; giữ nguyên tag công khai, không force-update. Terminal agent vẫn thiếu credential để push commit kết quả kiểm thử sau phát hành.
